@@ -11,6 +11,8 @@ import {
   User,
   Sparkles,
   CornerDownLeft,
+  ChevronDown,
+  FolderOpen,
 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -65,16 +67,43 @@ export function AIChatPanel({
   isCollapsed: boolean
   onToggle: () => void
 }) {
+  const FOLDER_OPTIONS = [
+    "All Positions",
+    "Technology",
+    "Healthcare",
+    "Energy",
+    "Financials",
+    "Research",
+    "Earnings",
+    "Notes",
+  ]
+
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState("")
+  const [activeFolder, setActiveFolder] = useState("All Positions")
+  const [folderDropdownOpen, setFolderDropdownOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setFolderDropdownOpen(false)
+      }
+    }
+    if (folderDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [folderDropdownOpen])
 
   const handleSend = () => {
     if (!input.trim()) return
@@ -155,13 +184,48 @@ export function AIChatPanel({
         </button>
       </div>
 
-      {/* Model indicator */}
-      <div className="border-b border-border px-3 py-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-positive" />
-          <span className="font-mono text-[10px] text-muted-foreground">
-            claude-4-opus / context: portfolio + market data
+      {/* Model indicator + Folder context */}
+      <div className="flex items-center justify-between border-b border-border px-3 py-1.5 gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-positive" />
+          <span className="font-mono text-[10px] text-muted-foreground truncate">
+            claude-4-opus
           </span>
+        </div>
+        {/* Folder context dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setFolderDropdownOpen((prev) => !prev)}
+            className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            <FolderOpen className="h-3 w-3 text-muted-foreground" />
+            <span className="truncate max-w-[80px]">{activeFolder}</span>
+            <ChevronDown className={cn("h-2.5 w-2.5 text-muted-foreground transition-transform", folderDropdownOpen && "rotate-180")} />
+          </button>
+          {folderDropdownOpen && (
+            <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border border-border bg-popover py-1 shadow-lg">
+              {FOLDER_OPTIONS.map((folder) => (
+                <button
+                  key={folder}
+                  type="button"
+                  onClick={() => {
+                    setActiveFolder(folder)
+                    setFolderDropdownOpen(false)
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-3 py-1.5 text-xs transition-colors hover:bg-accent",
+                    activeFolder === folder
+                      ? "text-foreground font-medium"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  <FolderOpen className="h-3 w-3" />
+                  {folder}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

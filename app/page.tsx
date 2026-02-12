@@ -25,12 +25,7 @@ export default function Page() {
           </span>
           <span className="text-xs text-muted-foreground">Capital</span>
         </div>
-        <nav className="flex items-center gap-1">
-          <TopBarButton label="Dashboard" active />
-          <TopBarButton label="Portfolio" />
-          <TopBarButton label="Trades" />
-          <TopBarButton label="Analytics" />
-        </nav>
+        <div />
         <div className="flex items-center gap-3">
           <span className="font-mono text-[10px] text-muted-foreground">
             S&P 500: 6,142.38{" "}
@@ -113,23 +108,4 @@ export default function Page() {
   )
 }
 
-function TopBarButton({
-  label,
-  active = false,
-}: {
-  label: string
-  active?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-        active
-          ? "bg-secondary text-foreground font-medium"
-          : "text-muted-foreground hover:text-foreground hover:bg-accent"
-      }`}
-    >
-      {label}
-    </button>
-  )
-}
+

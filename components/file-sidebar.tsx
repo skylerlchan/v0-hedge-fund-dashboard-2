@@ -19,8 +19,12 @@ import {
   PanelLeftClose,
   PanelLeft,
   Search,
+  List,
+  LayoutGrid,
+  Upload,
 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 interface TreeNode {
@@ -144,6 +148,20 @@ const fileTree: TreeNode[] = [
   },
 ]
 
+/* ── Icon map for grid view (maps folder names to icons) ── */
+const FOLDER_ICON_MAP: Record<string, React.ReactNode> = {
+  Positions: <TrendingUp className="h-5 w-5" />,
+  Technology: <Folder className="h-5 w-5" />,
+  Healthcare: <Folder className="h-5 w-5" />,
+  Energy: <Folder className="h-5 w-5" />,
+  Financials: <Folder className="h-5 w-5" />,
+  Research: <BookOpen className="h-5 w-5" />,
+  Earnings: <BarChart3 className="h-5 w-5" />,
+  Notes: <StickyNote className="h-5 w-5" />,
+  Calendar: <Calendar className="h-5 w-5" />,
+}
+
+/* ── List View: Tree Item ── */
 function TreeItem({
   node,
   depth = 0,
@@ -163,7 +181,7 @@ function TreeItem({
           "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors",
           "hover:bg-accent hover:text-accent-foreground",
           hasChildren ? "text-foreground" : "text-muted-foreground",
-          depth === 0 && "font-medium"
+          depth === 0 && "font-medium",
         )}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
       >
@@ -200,6 +218,120 @@ function TreeItem({
   )
 }
 
+/* ── Grid View: Folder Card ── */
+function GridFolderCard({
+  node,
+  onOpen,
+}: {
+  node: TreeNode
+  onOpen: (node: TreeNode) => void
+}) {
+  const hasChildren = node.children && node.children.length > 0
+  const childCount = node.children?.length ?? 0
+  const isFile = !hasChildren
+
+  return (
+    <button
+      type="button"
+      onClick={() => hasChildren ? onOpen(node) : undefined}
+      className={cn(
+        "flex flex-col items-center gap-2 rounded-lg border border-border p-3 transition-colors",
+        "hover:bg-accent hover:border-muted-foreground/30",
+        isFile && "opacity-80",
+      )}
+    >
+      <div className={cn(
+        "flex h-10 w-10 items-center justify-center rounded-lg",
+        hasChildren ? "bg-secondary text-foreground" : "bg-secondary/60 text-muted-foreground",
+      )}>
+        {isFile ? (
+          node.name.endsWith(".xlsx") ? (
+            <FileSpreadsheet className="h-5 w-5" />
+          ) : (
+            <FileText className="h-5 w-5" />
+          )
+        ) : (
+          FOLDER_ICON_MAP[node.name] || <Folder className="h-5 w-5" />
+        )}
+      </div>
+      <div className="flex flex-col items-center gap-0.5 min-w-0 w-full">
+        <span className="text-[11px] font-medium text-foreground truncate w-full text-center">
+          {node.name}
+        </span>
+        {hasChildren && (
+          <span className="text-[10px] text-muted-foreground">
+            {childCount} {childCount === 1 ? "item" : "items"}
+          </span>
+        )}
+      </div>
+    </button>
+  )
+}
+
+/* ── Grid View: Full Component ── */
+function GridView({ tree }: { tree: TreeNode[] }) {
+  const [path, setPath] = useState<TreeNode[]>([])
+
+  const currentItems = path.length === 0
+    ? tree
+    : path[path.length - 1].children ?? []
+
+  const handleOpen = (node: TreeNode) => {
+    setPath((prev) => [...prev, node])
+  }
+
+  const handleBreadcrumb = (index: number) => {
+    if (index < 0) {
+      setPath([])
+    } else {
+      setPath((prev) => prev.slice(0, index + 1))
+    }
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1 px-3 py-2 border-b border-border min-h-[32px]">
+        <button
+          type="button"
+          onClick={() => handleBreadcrumb(-1)}
+          className={cn(
+            "text-[10px] uppercase tracking-wider transition-colors",
+            path.length === 0 ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Root
+        </button>
+        {path.map((node, i) => (
+          <React.Fragment key={node.name}>
+            <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50" />
+            <button
+              type="button"
+              onClick={() => handleBreadcrumb(i)}
+              className={cn(
+                "text-[10px] uppercase tracking-wider transition-colors truncate max-w-[80px]",
+                i === path.length - 1 ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {node.name}
+            </button>
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <ScrollArea className="flex-1">
+        <div className="grid grid-cols-3 gap-2 p-3">
+          {currentItems.map((node) => (
+            <GridFolderCard key={node.name} node={node} onOpen={handleOpen} />
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
+
+/* ── Main Sidebar Export ── */
 export function FileSidebar({
   isCollapsed,
   onToggle,
@@ -207,6 +339,8 @@ export function FileSidebar({
   isCollapsed: boolean
   onToggle: () => void
 }) {
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list")
+
   if (isCollapsed) {
     return (
       <div className="flex h-full w-10 flex-col items-center border-r border-border bg-background py-2">
@@ -223,33 +357,102 @@ export function FileSidebar({
   }
 
   return (
-    <div className="flex h-full w-full flex-col border-r border-border bg-background">
-      <div className="flex items-center justify-between border-b border-border px-3 py-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Explorer
-        </span>
-        <button
-          type="button"
-          onClick={onToggle}
-          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          aria-label="Collapse sidebar"
-        >
-          <PanelLeftClose className="h-3.5 w-3.5" />
-        </button>
-      </div>
-      <div className="border-b border-border px-3 py-2">
-        <div className="flex items-center gap-2 rounded-md bg-secondary px-2 py-1.5">
-          <Search className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">Search files...</span>
+    <TooltipProvider delayDuration={200}>
+      <div className="flex h-full w-full flex-col border-r border-border bg-background">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border px-3 py-2">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Explorer
+          </span>
+          <div className="flex items-center gap-0.5">
+            {/* List / Grid toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "rounded p-1 transition-colors",
+                    viewMode === "list"
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                  aria-label="List view"
+                >
+                  <List className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                <p className="text-xs">List view</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "rounded p-1 transition-colors",
+                    viewMode === "grid"
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                <p className="text-xs">Grid view</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <span className="mx-1 h-3.5 w-px bg-border" />
+
+            <button
+              type="button"
+              onClick={onToggle}
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="border-b border-border px-3 py-2">
+          <div className="flex items-center gap-2 rounded-md bg-secondary px-2 py-1.5">
+            <Search className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Search files...</span>
+          </div>
+        </div>
+
+        {/* Content: List or Grid */}
+        {viewMode === "list" ? (
+          <ScrollArea className="flex-1">
+            <div className="p-1">
+              {fileTree.map((node) => (
+                <TreeItem key={node.name} node={node} depth={0} />
+              ))}
+            </div>
+          </ScrollArea>
+        ) : (
+          <GridView tree={fileTree} />
+        )}
+
+        {/* Upload button */}
+        <div className="border-t border-border p-3">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-muted-foreground/30 py-2 text-xs text-muted-foreground transition-colors hover:border-muted-foreground/60 hover:bg-accent hover:text-foreground"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Upload documents
+          </button>
         </div>
       </div>
-      <ScrollArea className="flex-1">
-        <div className="p-1">
-          {fileTree.map((node) => (
-            <TreeItem key={node.name} node={node} depth={0} />
-          ))}
-        </div>
-      </ScrollArea>
-    </div>
+    </TooltipProvider>
   )
 }
