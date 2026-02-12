@@ -9,6 +9,7 @@ import {
 import { FileSidebar } from "@/components/file-sidebar"
 import { NewsFeed } from "@/components/news-feed"
 import { AIChatPanel } from "@/components/ai-chat-panel"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function Page() {
   const [leftCollapsed, setLeftCollapsed] = useState(false)
@@ -42,6 +43,8 @@ export default function Page() {
           <span className="font-mono text-[10px] text-muted-foreground">
             10Y: 4.28%
           </span>
+          <span className="h-4 w-px bg-border" />
+          <ThemeToggle />
         </div>
       </header>
 

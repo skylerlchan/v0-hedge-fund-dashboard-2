@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${_inter.variable} ${_jetbrainsMono.variable}`}>
+    <html lang="en" className={`dark ${_inter.variable} ${_jetbrainsMono.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased overflow-hidden">{children}</body>
     </html>
   )
