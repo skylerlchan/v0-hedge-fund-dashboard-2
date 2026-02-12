@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Home } from "lucide-react"
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -20,10 +21,13 @@ export default function Page() {
       {/* Top Bar */}
       <header className="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold tracking-tight text-foreground">
-            Meridian
-          </span>
-          <span className="text-xs text-muted-foreground">Capital</span>
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label="Home"
+          >
+            <Home className="h-4 w-4" />
+          </button>
         </div>
         <div />
         <div className="flex items-center gap-3">

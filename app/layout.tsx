@@ -11,7 +11,7 @@ const _jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Meridian Capital — Intelligence Platform',
+  title: 'Hedge Fund Dashboard — Intelligence Platform',
   description:
     'Real-time market intelligence and portfolio recommendations for institutional investors.',
 }
