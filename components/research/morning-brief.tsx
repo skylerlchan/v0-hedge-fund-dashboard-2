@@ -485,7 +485,7 @@ function ThemeCard({ cluster }: { cluster: ThemeCluster }) {
   )
 }
 
-export function NewsFeed() {
+export function MorningBrief() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}

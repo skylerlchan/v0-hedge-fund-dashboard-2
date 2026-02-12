@@ -112,6 +112,7 @@ const fileTree: TreeNode[] = [
     name: "Research",
     icon: <BookOpen className="h-3.5 w-3.5" />,
     children: [
+      { name: "Morning Brief — Feb 12, 2026", icon: <FileText className="h-3.5 w-3.5" /> },
       { name: "Macro Outlook Q1 2026.pdf", icon: <FileText className="h-3.5 w-3.5" /> },
       { name: "AI Sector Deep Dive.pdf", icon: <FileText className="h-3.5 w-3.5" /> },
       { name: "Rate Sensitivity Model.xlsx", icon: <FileText className="h-3.5 w-3.5" /> },

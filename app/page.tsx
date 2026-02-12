@@ -7,7 +7,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable"
 import { FileSidebar } from "@/components/file-sidebar"
-import { NewsFeed } from "@/components/news-feed"
+import { MorningBrief } from "@/components/research/morning-brief"
 import { AIChatPanel } from "@/components/ai-chat-panel"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -74,7 +74,7 @@ export default function Page() {
 
           {/* Center Panel - News Feed */}
           <ResizablePanel defaultSize={rightCollapsed && leftCollapsed ? 100 : leftCollapsed ? 72 : rightCollapsed ? 82 : 54} minSize={30}>
-            <NewsFeed />
+            <MorningBrief />
           </ResizablePanel>
 
           {/* Right Panel - AI Chat */}
