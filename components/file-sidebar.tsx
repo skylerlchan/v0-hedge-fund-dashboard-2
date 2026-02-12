@@ -8,6 +8,7 @@ import {
   ChevronDown,
   Folder,
   FolderOpen,
+  FolderPlus,
   FileText,
   FileSpreadsheet,
   Building2,
@@ -22,15 +23,46 @@ import {
   List,
   LayoutGrid,
   Upload,
+  ArrowDownAZ,
+  Clock,
+  Pencil,
+  Check,
 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
+type SortMode = "alpha" | "recent" | "edited"
+
 interface TreeNode {
   name: string
   icon?: React.ReactNode
   children?: TreeNode[]
+}
+
+function sortTree(nodes: TreeNode[], mode: SortMode): TreeNode[] {
+  const sorted = [...nodes]
+  switch (mode) {
+    case "alpha":
+      sorted.sort((a, b) => a.name.localeCompare(b.name))
+      break
+    case "recent":
+      // Reverse the original order to simulate recency
+      sorted.reverse()
+      break
+    case "edited":
+      // Shuffle by a stable pseudo-random to simulate last edited
+      sorted.sort((a, b) => {
+        const aHas = a.children ? a.children.length : 0
+        const bHas = b.children ? b.children.length : 0
+        return bHas - aHas || a.name.localeCompare(b.name)
+      })
+      break
+  }
+  return sorted.map((node) => ({
+    ...node,
+    children: node.children ? sortTree(node.children, mode) : undefined,
+  }))
 }
 
 const fileTree: TreeNode[] = [
@@ -112,6 +144,7 @@ const fileTree: TreeNode[] = [
     name: "Research",
     icon: <BookOpen className="h-3.5 w-3.5" />,
     children: [
+      { name: "Morning Brief — Feb 12, 2026", icon: <FileText className="h-3.5 w-3.5" /> },
       { name: "Macro Outlook Q1 2026.pdf", icon: <FileText className="h-3.5 w-3.5" /> },
       { name: "AI Sector Deep Dive.pdf", icon: <FileText className="h-3.5 w-3.5" /> },
       { name: "Rate Sensitivity Model.xlsx", icon: <FileText className="h-3.5 w-3.5" /> },
@@ -340,6 +373,16 @@ export function FileSidebar({
   onToggle: () => void
 }) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
+  const [sortMode, setSortMode] = useState<SortMode>("alpha")
+  const [showSortMenu, setShowSortMenu] = useState(false)
+
+  const sortedTree = sortTree(fileTree, sortMode)
+
+  const sortOptions: { mode: SortMode; label: string; icon: React.ReactNode }[] = [
+    { mode: "alpha", label: "Alphabetical", icon: <ArrowDownAZ className="h-3.5 w-3.5" /> },
+    { mode: "recent", label: "Recency", icon: <Clock className="h-3.5 w-3.5" /> },
+    { mode: "edited", label: "Last edited", icon: <Pencil className="h-3.5 w-3.5" /> },
+  ]
 
   if (isCollapsed) {
     return (
@@ -365,6 +408,75 @@ export function FileSidebar({
             Explorer
           </span>
           <div className="flex items-center gap-0.5">
+            {/* Add Folder */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  aria-label="Add folder"
+                >
+                  <FolderPlus className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                <p className="text-xs">Add folder</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Sort */}
+            <div className="relative">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setShowSortMenu(!showSortMenu)}
+                    className={cn(
+                      "rounded p-1 transition-colors",
+                      showSortMenu
+                        ? "bg-accent text-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    )}
+                    aria-label="Sort files"
+                  >
+                    <ArrowDownAZ className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                  <p className="text-xs">Sort</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {showSortMenu && (
+                <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-md border border-border bg-popover p-1 shadow-md">
+                  {sortOptions.map((opt) => (
+                    <button
+                      key={opt.mode}
+                      type="button"
+                      onClick={() => {
+                        setSortMode(opt.mode)
+                        setShowSortMenu(false)
+                      }}
+                      className={cn(
+                        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs transition-colors",
+                        sortMode === opt.mode
+                          ? "bg-accent text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                      )}
+                    >
+                      {opt.icon}
+                      <span className="flex-1 text-left">{opt.label}</span>
+                      {sortMode === opt.mode && (
+                        <Check className="h-3 w-3 text-foreground" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <span className="mx-0.5 h-3.5 w-px bg-border" />
+
             {/* List / Grid toggle */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -408,7 +520,7 @@ export function FileSidebar({
               </TooltipContent>
             </Tooltip>
 
-            <span className="mx-1 h-3.5 w-px bg-border" />
+            <span className="mx-0.5 h-3.5 w-px bg-border" />
 
             <button
               type="button"
@@ -433,13 +545,13 @@ export function FileSidebar({
         {viewMode === "list" ? (
           <ScrollArea className="flex-1">
             <div className="p-1">
-              {fileTree.map((node) => (
+              {sortedTree.map((node) => (
                 <TreeItem key={node.name} node={node} depth={0} />
               ))}
             </div>
           </ScrollArea>
         ) : (
-          <GridView tree={fileTree} />
+          <GridView tree={sortedTree} />
         )}
 
         {/* Upload button */}

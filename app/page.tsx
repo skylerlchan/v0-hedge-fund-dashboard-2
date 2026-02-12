@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { Home } from "lucide-react"
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable"
 import { FileSidebar } from "@/components/file-sidebar"
-import { NewsFeed } from "@/components/news-feed"
+import { MorningBrief } from "@/components/research/morning-brief"
 import { AIChatPanel } from "@/components/ai-chat-panel"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -20,10 +21,13 @@ export default function Page() {
       {/* Top Bar */}
       <header className="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold tracking-tight text-foreground">
-            Meridian
-          </span>
-          <span className="text-xs text-muted-foreground">Capital</span>
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label="Home"
+          >
+            <Home className="h-4 w-4" />
+          </button>
         </div>
         <div />
         <div className="flex items-center gap-3">
@@ -74,7 +78,7 @@ export default function Page() {
 
           {/* Center Panel - News Feed */}
           <ResizablePanel defaultSize={rightCollapsed && leftCollapsed ? 100 : leftCollapsed ? 72 : rightCollapsed ? 82 : 54} minSize={30}>
-            <NewsFeed />
+            <MorningBrief />
           </ResizablePanel>
 
           {/* Right Panel - AI Chat */}
