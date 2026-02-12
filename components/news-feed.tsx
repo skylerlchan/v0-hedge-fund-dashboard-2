@@ -53,6 +53,44 @@ interface ThemeCluster {
   insights: StockInsight[]
 }
 
+export type FocusFilter =
+  | "none"
+  | "high-confidence"
+  | "against-thesis"
+  | "in-line"
+  | "no-change"
+  | "raise-tp"
+  | "lower-tp"
+  | "large-holdings"
+
+function insightMatchesFocus(insight: StockInsight, filter: FocusFilter): boolean {
+  switch (filter) {
+    case "none": return true
+    case "high-confidence": return insight.confidence >= 80
+    case "against-thesis": return insight.thesisAlignment === "challenges"
+    case "in-line": return insight.thesisAlignment === "confirms"
+    case "no-change": return insight.priceAction === "maintain"
+    case "raise-tp": return insight.priceAction === "raise"
+    case "lower-tp": return insight.priceAction === "lower"
+    case "large-holdings": return insight.lastPrice > 0 // placeholder -- we use a weight proxy below
+    default: return true
+  }
+}
+
+/** Simulated portfolio weights for the "large holdings" filter */
+const PORTFOLIO_WEIGHT: Record<string, number> = {
+  NVDA: 6.2, MSFT: 5.1, GOOGL: 3.8, AAPL: 5.4, META: 3.1,
+  LLY: 4.1, UNH: 3.6, JNJ: 2.4, XOM: 3.2, CVX: 2.1,
+  JPM: 4.5, GS: 2.8,
+}
+
+function insightMatchesFocusWithWeight(insight: StockInsight, filter: FocusFilter): boolean {
+  if (filter === "large-holdings") {
+    return (PORTFOLIO_WEIGHT[insight.ticker] ?? 0) >= 2.5
+  }
+  return insightMatchesFocus(insight, filter)
+}
+
 function getExcelPath(ticker: string, sector: string) {
   return `/positions/${sector.toLowerCase()}/${ticker.toLowerCase()}_model.xlsx`
 }
@@ -242,7 +280,7 @@ function ConfidenceSignal({ value }: { value: number }) {
   )
 }
 
-function InsightRow({ insight }: { insight: StockInsight }) {
+function InsightRow({ insight, focusFilter = "none" }: { insight: StockInsight; focusFilter?: FocusFilter }) {
   const priceConfig = PRICE_ACTION_CONFIG[insight.priceAction]
   const thesisConfig = THESIS_CONFIG[insight.thesisAlignment]
   const excelPath = getExcelPath(insight.ticker, insight.sector)
@@ -252,8 +290,17 @@ function InsightRow({ insight }: { insight: StockInsight }) {
     ? ((insight.suggestedTP - insight.lastPrice) / insight.lastPrice * 100)
     : ((insight.currentTP - insight.lastPrice) / insight.lastPrice * 100)
 
+  const isActive = focusFilter === "none" || insightMatchesFocusWithWeight(insight, focusFilter)
+  const isFocusMode = focusFilter !== "none"
+
   return (
-    <div className="py-3 first:pt-1.5 last:pb-1.5">
+    <div
+      className={cn(
+        "py-3 first:pt-1.5 last:pb-1.5 rounded-md transition-all duration-300",
+        isFocusMode && isActive && "relative ring-1 ring-foreground/10 bg-gradient-to-r from-foreground/[0.03] to-transparent my-1 px-3 -mx-1",
+        isFocusMode && !isActive && "opacity-25 saturate-0",
+      )}
+    >
       {/* Top: Ticker, confidence, thesis badge, TP action badge, excel button */}
       <div className="flex items-center gap-2 mb-1.5">
         <span className="font-mono text-xs font-semibold text-foreground">{insight.ticker}</span>
