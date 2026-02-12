@@ -218,10 +218,11 @@ function RecommendationRow({ rec }: { rec: PositionRecommendation }) {
           <TooltipTrigger asChild>
             <a
               href={excelPath}
-              className="ml-auto shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-positive"
+              className="ml-auto shrink-0 inline-flex items-center gap-1.5 rounded-md border border-[#21a366]/30 bg-[#21a366]/10 px-2.5 py-1 text-[11px] font-medium text-[#21a366] transition-colors hover:bg-[#21a366]/20 hover:border-[#21a366]/50"
               aria-label={`Open ${rec.ticker} position model spreadsheet`}
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
+              See model
             </a>
           </TooltipTrigger>
           <TooltipContent side="top" className="bg-popover text-popover-foreground border-border">
