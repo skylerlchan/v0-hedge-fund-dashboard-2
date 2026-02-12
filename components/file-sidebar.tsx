@@ -9,6 +9,7 @@ import {
   Folder,
   FolderOpen,
   FileText,
+  FileSpreadsheet,
   Building2,
   TrendingUp,
   BarChart3,
@@ -37,36 +38,68 @@ const fileTree: TreeNode[] = [
         name: "Technology",
         icon: <Folder className="h-3.5 w-3.5" />,
         children: [
-          { name: "AAPL — Apple Inc.", icon: <Building2 className="h-3.5 w-3.5" /> },
-          { name: "MSFT — Microsoft Corp.", icon: <Building2 className="h-3.5 w-3.5" /> },
-          { name: "NVDA — NVIDIA Corp.", icon: <Building2 className="h-3.5 w-3.5" /> },
-          { name: "GOOGL — Alphabet Inc.", icon: <Building2 className="h-3.5 w-3.5" /> },
-          { name: "META — Meta Platforms", icon: <Building2 className="h-3.5 w-3.5" /> },
+          { name: "AAPL — Apple Inc.", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "aapl_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+            { name: "aapl_dcf_backup.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+            { name: "AAPL — Q4 Notes.txt", icon: <FileText className="h-3.5 w-3.5" /> },
+          ]},
+          { name: "MSFT — Microsoft Corp.", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "msft_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+            { name: "msft_azure_sensitivity.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
+          { name: "NVDA — NVIDIA Corp.", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "nvda_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+            { name: "nvda_blackwell_rev_build.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+            { name: "NVDA — Thesis.txt", icon: <FileText className="h-3.5 w-3.5" /> },
+          ]},
+          { name: "GOOGL — Alphabet Inc.", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "googl_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
+          { name: "META — Meta Platforms", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "meta_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
         ],
       },
       {
         name: "Healthcare",
         icon: <Folder className="h-3.5 w-3.5" />,
         children: [
-          { name: "UNH — UnitedHealth Group", icon: <Building2 className="h-3.5 w-3.5" /> },
-          { name: "JNJ — Johnson & Johnson", icon: <Building2 className="h-3.5 w-3.5" /> },
-          { name: "LLY — Eli Lilly & Co.", icon: <Building2 className="h-3.5 w-3.5" /> },
+          { name: "UNH — UnitedHealth Group", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "unh_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
+          { name: "JNJ — Johnson & Johnson", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "jnj_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
+          { name: "LLY — Eli Lilly & Co.", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "lly_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+            { name: "lly_glp1_tam_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
         ],
       },
       {
         name: "Energy",
         icon: <Folder className="h-3.5 w-3.5" />,
         children: [
-          { name: "XOM — Exxon Mobil", icon: <Building2 className="h-3.5 w-3.5" /> },
-          { name: "CVX — Chevron Corp.", icon: <Building2 className="h-3.5 w-3.5" /> },
+          { name: "XOM — Exxon Mobil", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "xom_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+            { name: "xom_permian_acreage.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
+          { name: "CVX — Chevron Corp.", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "cvx_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
         ],
       },
       {
         name: "Financials",
         icon: <Folder className="h-3.5 w-3.5" />,
         children: [
-          { name: "JPM — JPMorgan Chase", icon: <Building2 className="h-3.5 w-3.5" /> },
-          { name: "GS — Goldman Sachs", icon: <Building2 className="h-3.5 w-3.5" /> },
+          { name: "JPM — JPMorgan Chase", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "jpm_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+            { name: "jpm_nii_sensitivity.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
+          { name: "GS — Goldman Sachs", icon: <Building2 className="h-3.5 w-3.5" />, children: [
+            { name: "gs_model.xlsx", icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+          ]},
         ],
       },
     ],
