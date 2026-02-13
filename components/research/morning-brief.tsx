@@ -39,6 +39,9 @@ interface StockInsight {
   thesisAlignment: ThesisAlignment
   thesisSummary: string
   rationale: string
+  portfolioWeight: number
+  keyAssumption: string
+  keyAssumptionValue: string
 }
 
 interface Headline {
@@ -67,11 +70,6 @@ export type FocusFilter =
   | "lower-tp"
   | "large-holdings"
 
-const PORTFOLIO_WEIGHT: Record<string, number> = {
-  NVDA: 6.2, MSFT: 5.1, GOOGL: 3.8, AAPL: 5.4, META: 3.1,
-  LLY: 4.1, UNH: 3.6, JNJ: 2.4, XOM: 3.2, CVX: 2.1,
-  JPM: 4.5, GS: 2.8, AMZN: 4.8, TSLA: 2.9, CRM: 1.8,
-}
 
 function getExcelPath(ticker: string, sector: string) {
   return `/positions/${sector.toLowerCase()}/${ticker.toLowerCase()}_model.xlsx`
@@ -146,8 +144,8 @@ const themeClusters: ThemeCluster[] = [
       { title: "2-Year Treasury Yield Climbs to 4.52% on Hawkish Fed Tone", source: "Bloomberg", time: "1h ago" },
     ],
     insights: [
-      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 235, suggestedTP: 220, priceAction: "lower", lastPrice: 198, thesisAlignment: "challenges", thesisSummary: "NII expansion from rate normalization", rationale: "Our bull case assumed two 25bp cuts by mid-year boosting loan demand. Three Fed members now prefer no cuts at all in 2026. Higher-for-longer erodes the NII tailwind and compresses the multiple." },
-      { ticker: "GS", company: "Goldman Sachs", sector: "Financials", currentTP: 510, suggestedTP: 485, priceAction: "lower", lastPrice: 442, thesisAlignment: "challenges", thesisSummary: "IB fee recovery driven by rate normalization", rationale: "Delayed easing means M&A and IPO pipeline remains suppressed. Goldman's own bullish equity target ironically depends on rate cuts that their rates desk sees as unlikely." },
+      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 235, suggestedTP: 220, priceAction: "lower", lastPrice: 198, thesisAlignment: "challenges", thesisSummary: "NII expansion from rate normalization", rationale: "Our bull case assumed two 25bp cuts by mid-year boosting loan demand. Three Fed members now prefer no cuts at all in 2026. Higher-for-longer erodes the NII tailwind and compresses the multiple.", portfolioWeight: 4.5, keyAssumption: "P/E Multiple", keyAssumptionValue: "11.8x" },
+      { ticker: "GS", company: "Goldman Sachs", sector: "Financials", currentTP: 510, suggestedTP: 485, priceAction: "lower", lastPrice: 442, thesisAlignment: "challenges", thesisSummary: "IB fee recovery driven by rate normalization", rationale: "Delayed easing means M&A and IPO pipeline remains suppressed. Goldman's own bullish equity target ironically depends on rate cuts that their rates desk sees as unlikely.", portfolioWeight: 2.8, keyAssumption: "Rev Multiple", keyAssumptionValue: "2.1x" },
     ],
   },
   {
@@ -205,8 +203,8 @@ const themeClusters: ThemeCluster[] = [
       { title: "Chinese Foundries Close Gap in 28nm Chip Production Yields", source: "Bloomberg", time: "6h ago" },
     ],
     insights: [
-      { ticker: "NVDA", company: "NVIDIA Corp.", sector: "Technology", currentTP: 1025, suggestedTP: 1080, priceAction: "raise", lastPrice: 878, thesisAlignment: "challenges", thesisSummary: "Uncontested AI chip leadership", rationale: "Despite geopolitical headwind, near-term demand data overwhelms risk discount. Raising TP to reflect Q1 upside surprise and order book extension, while flagging China risk as a medium-term overhang requiring monitoring." },
-      { ticker: "AAPL", company: "Apple Inc.", sector: "Technology", currentTP: 260, suggestedTP: 250, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "Greater China revenue stability", rationale: "Cloud restrictions and tech nationalism add pressure to AAPL's 18% China revenue exposure. Three policy vectors -- subsidies, cloud restrictions, foundry buildout -- all point the same direction." },
+      { ticker: "NVDA", company: "NVIDIA Corp.", sector: "Technology", currentTP: 1025, suggestedTP: 1080, priceAction: "raise", lastPrice: 878, thesisAlignment: "challenges", thesisSummary: "Uncontested AI chip leadership", rationale: "Despite geopolitical headwind, near-term demand data overwhelms risk discount. Raising TP to reflect Q1 upside surprise and order book extension, while flagging China risk as a medium-term overhang requiring monitoring.", portfolioWeight: 6.2, keyAssumption: "Rev Multiple", keyAssumptionValue: "28.5x" },
+      { ticker: "AAPL", company: "Apple Inc.", sector: "Technology", currentTP: 260, suggestedTP: 250, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "Greater China revenue stability", rationale: "Cloud restrictions and tech nationalism add pressure to AAPL's 18% China revenue exposure. Three policy vectors -- subsidies, cloud restrictions, foundry buildout -- all point the same direction.", portfolioWeight: 5.4, keyAssumption: "EV/EBITDA", keyAssumptionValue: "22.1x" },
     ],
   },
   {
@@ -237,7 +235,7 @@ const themeClusters: ThemeCluster[] = [
       { title: "Discover Financial Raises Loss Reserve Guidance by $400M", source: "CNBC", time: "5h ago" },
     ],
     insights: [
-      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 220, suggestedTP: 230, priceAction: "raise", lastPrice: 198, thesisAlignment: "challenges", thesisSummary: "Consumer banking resilience", rationale: "Rising delinquencies across auto and card portfolios will require higher provisioning, but JPM's fortress balance sheet positions it to gain share as weaker lenders pull back. Raising TP to reflect counter-cyclical market share opportunity." },
+      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 220, suggestedTP: 230, priceAction: "raise", lastPrice: 198, thesisAlignment: "challenges", thesisSummary: "Consumer banking resilience", rationale: "Rising delinquencies across auto and card portfolios will require higher provisioning, but JPM's fortress balance sheet positions it to gain share as weaker lenders pull back. Raising TP to reflect counter-cyclical market share opportunity.", portfolioWeight: 4.5, keyAssumption: "P/TBV", keyAssumptionValue: "2.3x" },
     ],
   },
   {
@@ -253,8 +251,8 @@ const themeClusters: ThemeCluster[] = [
       { title: "Dell, HPE See Surge in Enterprise Server Orders", source: "Barron's", time: "4h ago" },
     ],
     insights: [
-      { ticker: "MSFT", company: "Microsoft Corp.", sector: "Technology", currentTP: 480, suggestedTP: 460, priceAction: "lower", lastPrice: 415, thesisAlignment: "challenges", thesisSummary: "Azure as primary AI monetization vehicle", rationale: "Cloud repatriation at scale adds headwind to Azure growth already constrained by capacity. Enterprise shift to on-prem for stable workloads reduces Azure's addressable market for non-AI compute. Incrementally challenging." },
-      { ticker: "GOOGL", company: "Alphabet Inc.", sector: "Technology", currentTP: 210, suggestedTP: 200, priceAction: "lower", lastPrice: 182, thesisAlignment: "challenges", thesisSummary: "GCP share gains vs. Azure", rationale: "Repatriation trend affects all hyperscalers. GCP's smaller base makes it relatively more exposed to enterprise cost optimization decisions. The share-gain thesis is partially offset." },
+      { ticker: "MSFT", company: "Microsoft Corp.", sector: "Technology", currentTP: 480, suggestedTP: 460, priceAction: "lower", lastPrice: 415, thesisAlignment: "challenges", thesisSummary: "Azure as primary AI monetization vehicle", rationale: "Cloud repatriation at scale adds headwind to Azure growth already constrained by capacity. Enterprise shift to on-prem for stable workloads reduces Azure's addressable market for non-AI compute. Incrementally challenging.", portfolioWeight: 5.1, keyAssumption: "EV/Rev", keyAssumptionValue: "12.4x" },
+      { ticker: "GOOGL", company: "Alphabet Inc.", sector: "Technology", currentTP: 210, suggestedTP: 200, priceAction: "lower", lastPrice: 182, thesisAlignment: "challenges", thesisSummary: "GCP share gains vs. Azure", rationale: "Repatriation trend affects all hyperscalers. GCP's smaller base makes it relatively more exposed to enterprise cost optimization decisions. The share-gain thesis is partially offset.", portfolioWeight: 3.8, keyAssumption: "P/E Multiple", keyAssumptionValue: "20.7x" },
     ],
   },
   {
@@ -366,32 +364,67 @@ function InsightRow({ insight, onQuote }: { insight: StockInsight; onQuote?: (te
 
   return (
     <QuotableWrapper quotableText={quotableText} onQuote={onQuote}>
-      <div className="py-3 first:pt-1.5 last:pb-1.5 rounded-md transition-all duration-300">
-        {/* Top: Ticker, price action badge */}
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="font-mono text-xs font-semibold text-foreground">{insight.ticker}</span>
+      <div className="my-2 rounded-lg border border-negative/20 bg-card p-3 transition-all duration-300 hover:border-negative/35">
+        {/* Row 1: Ticker + Company + Price Action Badge + Per-stock actions */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="font-mono text-sm font-bold text-foreground">{insight.ticker}</span>
           <span className="text-[11px] text-muted-foreground/70">{insight.company}</span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+              priceConfig.bgColor,
+              priceConfig.color,
+            )}
+          >
+            <priceConfig.Icon className="h-2.5 w-2.5" />
+            {priceConfig.label}
+          </span>
+          {/* Per-stock action buttons */}
           <div className="ml-auto flex items-center gap-1.5">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                priceConfig.bgColor,
-                priceConfig.color,
-              )}
-            >
-              <priceConfig.Icon className="h-2.5 w-2.5" />
-              {priceConfig.label}
-            </span>
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive transition-colors hover:bg-positive/25"
+                    aria-label="Approve"
+                  >
+                    <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                  <p className="text-xs">Approve</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-negative/15 text-negative transition-colors hover:bg-negative/25"
+                    aria-label="Reject"
+                  >
+                    <X className="h-3.5 w-3.5" strokeWidth={3} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                  <p className="text-xs">Reject</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <AnalystButton name="Jess" imageSrc="/images/analyst-jess.jpg" />
+            <AnalystButton name="Martin" imageSrc="/images/analyst-martin.jpg" />
           </div>
         </div>
 
-        {/* Middle: Target price row */}
-        <div className="flex items-center gap-4 mb-1">
-          <div className="flex items-center gap-1.5">
+        {/* Row 2: Metrics strip */}
+        <div className="flex items-center gap-3 mb-2 flex-wrap">
+          <div className="flex items-center gap-1">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Last</span>
             <span className="font-mono text-[11px] text-muted-foreground">${insight.lastPrice}</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">TP</span>
             <span className="font-mono text-[11px] text-muted-foreground">${insight.currentTP}</span>
             {insight.suggestedTP && (
@@ -406,15 +439,24 @@ function InsightRow({ insight, onQuote }: { insight: StockInsight; onQuote?: (te
               </>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Upside</span>
             <span className="font-mono text-[11px] font-medium text-positive">
               +{Math.abs(upside).toFixed(1)}%
             </span>
           </div>
+          <span className="h-3 w-px bg-border" />
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">% Port</span>
+            <span className="font-mono text-[11px] font-medium text-foreground">{insight.portfolioWeight}%</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">{insight.keyAssumption}</span>
+            <span className="font-mono text-[11px] font-medium text-foreground">{insight.keyAssumptionValue}</span>
+          </div>
         </div>
 
-        {/* Thesis + Rationale */}
+        {/* Row 3: Thesis + Rationale */}
         <div className="flex items-start gap-2">
           <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground/60 pt-px">Thesis</span>
           <div>
@@ -585,43 +627,6 @@ function ThemeCard({ cluster, onQuote }: { cluster: ThemeCluster; onQuote?: (tex
             <span className="text-[10px] text-muted-foreground/50">
               {cluster.insights.length} position{cluster.insights.length !== 1 ? "s" : ""} affected
             </span>
-            {/* Next step actions -- always all four */}
-            <div className="ml-auto flex items-center gap-1.5">
-              <TooltipProvider delayDuration={100}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-positive/15 text-positive transition-colors hover:bg-positive/25"
-                      aria-label="Approve"
-                    >
-                      <Check className="h-4 w-4" strokeWidth={3} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
-                    <p className="text-xs">Approve</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={100}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-negative/15 text-negative transition-colors hover:bg-negative/25"
-                      aria-label="Reject"
-                    >
-                      <X className="h-4 w-4" strokeWidth={3} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
-                    <p className="text-xs">Reject</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <AnalystButton name="Jess" imageSrc="/images/analyst-jess.jpg" />
-              <AnalystButton name="Martin" imageSrc="/images/analyst-martin.jpg" />
-            </div>
           </div>
           <div className="divide-y divide-border/40">
             {cluster.insights.map((insight) => (
