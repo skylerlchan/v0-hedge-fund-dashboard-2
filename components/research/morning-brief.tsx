@@ -28,8 +28,6 @@ import { cn } from "@/lib/utils"
 type ThesisAlignment = "confirms" | "challenges" | "neutral"
 type PriceAction = "raise" | "lower" | "maintain"
 
-type NextStepType = "approve" | "reject" | "ask-analyst"
-
 interface StockInsight {
   ticker: string
   company: string
@@ -57,7 +55,6 @@ interface ThemeCluster {
   summary: string
   headlines: Headline[]
   insights: StockInsight[]
-  nextStep: NextStepType
 }
 
 export type FocusFilter =
@@ -90,8 +87,8 @@ const SOURCE_COLORS: Record<string, { bg: string; text: string; abbr: string }> 
   "Nikkei Asia": { bg: "bg-[#c0392b]/15", text: "text-[#c0392b]", abbr: "NK" },
   "Barron's": { bg: "bg-[#1a6b3c]/15", text: "text-[#1a6b3c]", abbr: "BA" },
   "The Information": { bg: "bg-[#6b5b95]/15", text: "text-[#6b5b95]", abbr: "TI" },
-  "Axios": { bg: "bg-[#0052FF]/15", text: "text-[#0052FF]", abbr: "AX" },
-  "Semafor": { bg: "bg-[#00C853]/15", text: "text-[#00C853]", abbr: "SM" },
+  Axios: { bg: "bg-[#0052FF]/15", text: "text-[#0052FF]", abbr: "AX" },
+  Semafor: { bg: "bg-[#00C853]/15", text: "text-[#00C853]", abbr: "SM" },
 }
 
 function SourceBadge({ source }: { source: string }) {
@@ -135,7 +132,6 @@ const themeClusters: ThemeCluster[] = [
       { title: "Morgan Stanley Raises 2026 Semi Capex Estimate by 18%", source: "Barron's", time: "3h ago" },
     ],
     insights: [],
-    nextStep: "approve",
   },
   {
     id: "2",
@@ -150,10 +146,9 @@ const themeClusters: ThemeCluster[] = [
       { title: "2-Year Treasury Yield Climbs to 4.52% on Hawkish Fed Tone", source: "Bloomberg", time: "1h ago" },
     ],
     insights: [
-      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 235, suggestedTP: 220, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "NII expansion from rate normalization", rationale: "Our bull case assumed two 25bp cuts by mid-year boosting loan demand. Three Fed members now prefer no cuts at all in 2026. Higher-for-longer erodes the NII tailwind and compresses the multiple." },
-      { ticker: "GS", company: "Goldman Sachs", sector: "Financials", currentTP: 510, suggestedTP: 485, priceAction: "lower", lastPrice: 498, thesisAlignment: "challenges", thesisSummary: "IB fee recovery driven by rate normalization", rationale: "Delayed easing means M&A and IPO pipeline remains suppressed. Goldman's own bullish equity target ironically depends on rate cuts that their rates desk sees as unlikely." },
+      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 235, suggestedTP: 220, priceAction: "lower", lastPrice: 198, thesisAlignment: "challenges", thesisSummary: "NII expansion from rate normalization", rationale: "Our bull case assumed two 25bp cuts by mid-year boosting loan demand. Three Fed members now prefer no cuts at all in 2026. Higher-for-longer erodes the NII tailwind and compresses the multiple." },
+      { ticker: "GS", company: "Goldman Sachs", sector: "Financials", currentTP: 510, suggestedTP: 485, priceAction: "lower", lastPrice: 442, thesisAlignment: "challenges", thesisSummary: "IB fee recovery driven by rate normalization", rationale: "Delayed easing means M&A and IPO pipeline remains suppressed. Goldman's own bullish equity target ironically depends on rate cuts that their rates desk sees as unlikely." },
     ],
-    nextStep: "ask-analyst",
   },
   {
     id: "3",
@@ -168,7 +163,6 @@ const themeClusters: ThemeCluster[] = [
       { title: "Madrigal Pharma Shares Drop 12% on Competitive Data Read", source: "Bloomberg", time: "1h ago" },
     ],
     insights: [],
-    nextStep: "approve",
   },
   {
     id: "4",
@@ -183,7 +177,6 @@ const themeClusters: ThemeCluster[] = [
       { title: "Apple Intelligence Adoption Reaches 74% of iPhone 16 Users", source: "The Information", time: "3h ago" },
     ],
     insights: [],
-    nextStep: "approve",
   },
   {
     id: "5",
@@ -198,7 +191,6 @@ const themeClusters: ThemeCluster[] = [
       { title: "Chevron, ConocoPhillips Seen as Likely Responsive Acquirers", source: "WSJ", time: "5h ago" },
     ],
     insights: [],
-    nextStep: "approve",
   },
   {
     id: "6",
@@ -213,10 +205,9 @@ const themeClusters: ThemeCluster[] = [
       { title: "Chinese Foundries Close Gap in 28nm Chip Production Yields", source: "Bloomberg", time: "6h ago" },
     ],
     insights: [
-      { ticker: "NVDA", company: "NVIDIA Corp.", sector: "Technology", currentTP: 1025, suggestedTP: 980, priceAction: "lower", lastPrice: 878, thesisAlignment: "challenges", thesisSummary: "Uncontested AI chip leadership", rationale: "China stimulus accelerates domestic chip alternatives, adding long-term competitive risk. Three separate policy actions signal a coordinated effort. Lower TP to reflect incremental geopolitical risk premium." },
+      { ticker: "NVDA", company: "NVIDIA Corp.", sector: "Technology", currentTP: 1025, suggestedTP: 1080, priceAction: "raise", lastPrice: 878, thesisAlignment: "challenges", thesisSummary: "Uncontested AI chip leadership", rationale: "Despite geopolitical headwind, near-term demand data overwhelms risk discount. Raising TP to reflect Q1 upside surprise and order book extension, while flagging China risk as a medium-term overhang requiring monitoring." },
       { ticker: "AAPL", company: "Apple Inc.", sector: "Technology", currentTP: 260, suggestedTP: 250, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "Greater China revenue stability", rationale: "Cloud restrictions and tech nationalism add pressure to AAPL's 18% China revenue exposure. Three policy vectors -- subsidies, cloud restrictions, foundry buildout -- all point the same direction." },
     ],
-    nextStep: "ask-analyst",
   },
   {
     id: "7",
@@ -231,7 +222,6 @@ const themeClusters: ThemeCluster[] = [
       { title: "NATO-Europe Defense Budgets Converging Toward 3% of GDP", source: "Bloomberg", time: "3h ago" },
     ],
     insights: [],
-    nextStep: "approve",
   },
   {
     id: "8",
@@ -247,9 +237,8 @@ const themeClusters: ThemeCluster[] = [
       { title: "Discover Financial Raises Loss Reserve Guidance by $400M", source: "CNBC", time: "5h ago" },
     ],
     insights: [
-      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 220, suggestedTP: 210, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "Consumer banking resilience", rationale: "Rising delinquencies across auto and card portfolios will require higher provisioning. JPM's consumer banking segment faces margin compression from credit losses. Incrementally negative on top of the rate path headwind." },
+      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 220, suggestedTP: 230, priceAction: "raise", lastPrice: 198, thesisAlignment: "challenges", thesisSummary: "Consumer banking resilience", rationale: "Rising delinquencies across auto and card portfolios will require higher provisioning, but JPM's fortress balance sheet positions it to gain share as weaker lenders pull back. Raising TP to reflect counter-cyclical market share opportunity." },
     ],
-    nextStep: "reject",
   },
   {
     id: "9",
@@ -264,10 +253,9 @@ const themeClusters: ThemeCluster[] = [
       { title: "Dell, HPE See Surge in Enterprise Server Orders", source: "Barron's", time: "4h ago" },
     ],
     insights: [
-      { ticker: "MSFT", company: "Microsoft Corp.", sector: "Technology", currentTP: 480, suggestedTP: 460, priceAction: "lower", lastPrice: 462, thesisAlignment: "challenges", thesisSummary: "Azure as primary AI monetization vehicle", rationale: "Cloud repatriation at scale adds headwind to Azure growth already constrained by capacity. Enterprise shift to on-prem for stable workloads reduces Azure's addressable market for non-AI compute. Incrementally challenging." },
+      { ticker: "MSFT", company: "Microsoft Corp.", sector: "Technology", currentTP: 480, suggestedTP: 460, priceAction: "lower", lastPrice: 415, thesisAlignment: "challenges", thesisSummary: "Azure as primary AI monetization vehicle", rationale: "Cloud repatriation at scale adds headwind to Azure growth already constrained by capacity. Enterprise shift to on-prem for stable workloads reduces Azure's addressable market for non-AI compute. Incrementally challenging." },
       { ticker: "GOOGL", company: "Alphabet Inc.", sector: "Technology", currentTP: 210, suggestedTP: 200, priceAction: "lower", lastPrice: 182, thesisAlignment: "challenges", thesisSummary: "GCP share gains vs. Azure", rationale: "Repatriation trend affects all hyperscalers. GCP's smaller base makes it relatively more exposed to enterprise cost optimization decisions. The share-gain thesis is partially offset." },
     ],
-    nextStep: "ask-analyst",
   },
   {
     id: "10",
@@ -282,7 +270,6 @@ const themeClusters: ThemeCluster[] = [
       { title: "Cross-Shareholding Unwinding Accelerates Among Top 100 Firms", source: "Bloomberg", time: "4h ago" },
     ],
     insights: [],
-    nextStep: "approve",
   },
 ]
 
@@ -332,49 +319,8 @@ function QuotableWrapper({
   )
 }
 
-/** Next step action button for TP & Thesis Review header */
-function NextStepButton({ step }: { step: NextStepType }) {
-  if (step === "approve") {
-    return (
-      <TooltipProvider delayDuration={100}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-positive/15 text-positive transition-colors hover:bg-positive/25"
-              aria-label="Approve — in line with thesis"
-            >
-              <Check className="h-4 w-4" strokeWidth={3} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
-            <p className="text-xs">Approve — In line with thesis</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )
-  }
-  if (step === "reject") {
-    return (
-      <TooltipProvider delayDuration={100}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-negative/15 text-negative transition-colors hover:bg-negative/25"
-              aria-label="Reject — against thesis"
-            >
-              <X className="h-4 w-4" strokeWidth={3} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
-            <p className="text-xs">Reject — Against thesis</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )
-  }
-  // ask-analyst
+/** Analyst button with headshot and Slack overlay */
+function AnalystButton({ name, imageSrc }: { name: string; imageSrc: string }) {
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
@@ -382,12 +328,12 @@ function NextStepButton({ step }: { step: NextStepType }) {
           <button
             type="button"
             className="relative inline-flex h-7 items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 pl-1 pr-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-            aria-label="Ask Jess to analyze"
+            aria-label={`Ask ${name} to analyze`}
           >
             <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
               <Image
-                src="/images/analyst-jess.jpg"
-                alt="Jess"
+                src={imageSrc}
+                alt={name}
                 width={20}
                 height={20}
                 className="h-full w-full object-cover"
@@ -396,11 +342,11 @@ function NextStepButton({ step }: { step: NextStepType }) {
                 <MessageSquare className="h-1.5 w-1.5 text-white" />
               </span>
             </span>
-            <span>Ask Jess</span>
+            <span>Ask {name}</span>
           </button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
-          <p className="text-xs">Ask Jess to analyze this theme</p>
+          <p className="text-xs">Ask {name} to analyze this theme</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -462,8 +408,8 @@ function InsightRow({ insight, onQuote }: { insight: StockInsight; onQuote?: (te
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Upside</span>
-            <span className={cn("font-mono text-[11px] font-medium", upside > 0 ? "text-positive" : "text-negative")}>
-              {upside > 0 ? "+" : ""}{upside.toFixed(1)}%
+            <span className="font-mono text-[11px] font-medium text-positive">
+              +{Math.abs(upside).toFixed(1)}%
             </span>
           </div>
         </div>
@@ -622,7 +568,7 @@ function ThemeCard({ cluster, onQuote }: { cluster: ThemeCluster; onQuote?: (tex
         </p>
       </QuotableWrapper>
 
-      {/* Stock Insights — only rendered for against-thesis themes */}
+      {/* Stock Insights -- only rendered for against-thesis themes */}
       {hasInsights && (
         <div
           className={cn(
@@ -639,9 +585,42 @@ function ThemeCard({ cluster, onQuote }: { cluster: ThemeCluster; onQuote?: (tex
             <span className="text-[10px] text-muted-foreground/50">
               {cluster.insights.length} position{cluster.insights.length !== 1 ? "s" : ""} affected
             </span>
-            {/* Next step action */}
-            <div className="ml-auto">
-              <NextStepButton step={cluster.nextStep} />
+            {/* Next step actions -- always all four */}
+            <div className="ml-auto flex items-center gap-1.5">
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-positive/15 text-positive transition-colors hover:bg-positive/25"
+                      aria-label="Approve"
+                    >
+                      <Check className="h-4 w-4" strokeWidth={3} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                    <p className="text-xs">Approve</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-negative/15 text-negative transition-colors hover:bg-negative/25"
+                      aria-label="Reject"
+                    >
+                      <X className="h-4 w-4" strokeWidth={3} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                    <p className="text-xs">Reject</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <AnalystButton name="Jess" imageSrc="/images/analyst-jess.jpg" />
+              <AnalystButton name="Martin" imageSrc="/images/analyst-martin.jpg" />
             </div>
           </div>
           <div className="divide-y divide-border/40">
