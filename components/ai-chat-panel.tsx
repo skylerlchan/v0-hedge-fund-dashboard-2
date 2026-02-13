@@ -63,9 +63,13 @@ const initialMessages: Message[] = [
 export function AIChatPanel({
   isCollapsed,
   onToggle,
+  quotedText,
+  onClearQuote,
 }: {
   isCollapsed: boolean
   onToggle: () => void
+  quotedText?: string
+  onClearQuote?: () => void
 }) {
   const FOLDER_OPTIONS = [
     "All Positions",
@@ -91,6 +95,14 @@ export function AIChatPanel({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
+
+  // When quoted text arrives, populate the input
+  useEffect(() => {
+    if (quotedText) {
+      setInput(`> ${quotedText.split("\n").join("\n> ")}\n\n`)
+      inputRef.current?.focus()
+    }
+  }, [quotedText])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -121,6 +133,7 @@ export function AIChatPanel({
     }
     setMessages((prev) => [...prev, newMessage])
     setInput("")
+    onClearQuote?.()
 
     // Simulate assistant response
     setTimeout(() => {

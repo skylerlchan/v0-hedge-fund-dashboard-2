@@ -15,6 +15,12 @@ import { ThemeToggle } from "@/components/theme-toggle"
 export default function Page() {
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
+  const [quotedText, setQuotedText] = useState<string | undefined>(undefined)
+
+  const handleQuoteToChat = (text: string) => {
+    setQuotedText(text)
+    if (rightCollapsed) setRightCollapsed(false)
+  }
 
   return (
     <div className="flex h-screen w-screen flex-col bg-background">
@@ -78,7 +84,7 @@ export default function Page() {
 
           {/* Center Panel - News Feed */}
           <ResizablePanel defaultSize={rightCollapsed && leftCollapsed ? 100 : leftCollapsed ? 72 : rightCollapsed ? 82 : 54} minSize={30}>
-            <MorningBrief />
+            <MorningBrief onQuoteToChat={handleQuoteToChat} />
           </ResizablePanel>
 
           {/* Right Panel - AI Chat */}
@@ -94,6 +100,8 @@ export default function Page() {
                 <AIChatPanel
                   isCollapsed={false}
                   onToggle={() => setRightCollapsed(true)}
+                  quotedText={quotedText}
+                  onClearQuote={() => setQuotedText(undefined)}
                 />
               </ResizablePanel>
             </>
@@ -105,6 +113,8 @@ export default function Page() {
           <AIChatPanel
             isCollapsed={true}
             onToggle={() => setRightCollapsed(false)}
+            quotedText={quotedText}
+            onClearQuote={() => setQuotedText(undefined)}
           />
         ) : null}
       </div>

@@ -9,7 +9,9 @@ import {
   ArrowDown,
   Check,
   AlertTriangle,
-  Gauge,
+  Quote,
+  Presentation,
+  LayoutDashboard,
 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -23,6 +25,8 @@ import { cn } from "@/lib/utils"
 type ThesisAlignment = "confirms" | "challenges" | "neutral"
 type PriceAction = "raise" | "lower" | "maintain"
 
+type NextStepAction = "ask-jess" | "review-model" | "see-past-analysis"
+
 interface StockInsight {
   ticker: string
   company: string
@@ -34,7 +38,6 @@ interface StockInsight {
   thesisAlignment: ThesisAlignment
   thesisSummary: string
   rationale: string
-  /** 0-100 confidence signal */
   confidence: number
 }
 
@@ -48,9 +51,11 @@ interface ThemeCluster {
   id: string
   theme: string
   category: string
+  themeAlignment: ThesisAlignment
   summary: string
   headlines: Headline[]
   insights: StockInsight[]
+  nextSteps: NextStepAction[]
 }
 
 export type FocusFilter =
@@ -72,12 +77,11 @@ function insightMatchesFocus(insight: StockInsight, filter: FocusFilter): boolea
     case "no-change": return insight.priceAction === "maintain"
     case "raise-tp": return insight.priceAction === "raise"
     case "lower-tp": return insight.priceAction === "lower"
-    case "large-holdings": return insight.lastPrice > 0 // placeholder -- we use a weight proxy below
+    case "large-holdings": return insight.lastPrice > 0
     default: return true
   }
 }
 
-/** Simulated portfolio weights for the "large holdings" filter */
 const PORTFOLIO_WEIGHT: Record<string, number> = {
   NVDA: 6.2, MSFT: 5.1, GOOGL: 3.8, AAPL: 5.4, META: 3.1,
   LLY: 4.1, UNH: 3.6, JNJ: 2.4, XOM: 3.2, CVX: 2.1,
@@ -123,6 +127,22 @@ function SourceBadge({ source }: { source: string }) {
   )
 }
 
+// --------------- NEXT STEPS CONFIG ---------------
+
+const NEXT_STEP_CONFIG: Record<NextStepAction, { label: string; shortLabel: string }> = {
+  "ask-jess": { label: "Ask Jess to Analyze", shortLabel: "Ask Jess" },
+  "review-model": { label: "Review Model", shortLabel: "Review Model" },
+  "see-past-analysis": { label: "See Past Analysis", shortLabel: "Past Analysis" },
+}
+
+// --------------- THESIS ALIGNMENT for theme level ---------------
+
+const THEME_ALIGNMENT_CONFIG: Record<ThesisAlignment, { label: string; color: string; bgColor: string; Icon: typeof Check }> = {
+  confirms: { label: "In-line with thesis", color: "text-positive", bgColor: "bg-positive/8", Icon: Check },
+  challenges: { label: "Against thesis", color: "text-negative", bgColor: "bg-negative/8", Icon: AlertTriangle },
+  neutral: { label: "Thesis unaffected", color: "text-muted-foreground", bgColor: "bg-muted/60", Icon: Minus },
+}
+
 // --------------- DATA ---------------
 
 const themeClusters: ThemeCluster[] = [
@@ -130,6 +150,7 @@ const themeClusters: ThemeCluster[] = [
     id: "1",
     theme: "AI Infrastructure Spending Accelerates Beyond Expectations",
     category: "AI / Semis",
+    themeAlignment: "confirms",
     summary:
       "A cluster of data points across earnings, supply chain reports, and capex guidance revisions all point to the same conclusion: the AI infrastructure buildout is running hotter and longer than the market anticipated six months ago. NVIDIA's Q1 revenue guide of $43B beat consensus by 15%, while Microsoft disclosed a 40% sequential increase in unfulfilled Azure AI commitments. Separately, Taiwanese supply chain sources report Blackwell orders extending into 2027, and Morgan Stanley's semiconductor team raised their industry capex estimate for 2026 by 18%. The convergence of bottom-up company data and top-down industry checks creates an unusually strong signal.",
     headlines: [
@@ -143,11 +164,13 @@ const themeClusters: ThemeCluster[] = [
       { ticker: "MSFT", company: "Microsoft Corp.", sector: "Technology", currentTP: 480, suggestedTP: 465, priceAction: "lower", lastPrice: 462, thesisAlignment: "challenges", thesisSummary: "Azure as primary AI monetization vehicle", rationale: "Azure growth decelerated to 28% despite the demand surge, suggesting capacity constraints are binding. Backlog growth is encouraging long-term but near-term revenue conversion is slower than thesis assumed.", confidence: 68 },
       { ticker: "GOOGL", company: "Alphabet Inc.", sector: "Technology", currentTP: 195, suggestedTP: 210, priceAction: "raise", lastPrice: 182, thesisAlignment: "confirms", thesisSummary: "GCP share gains vs. Azure", rationale: "MSFT capacity constraints create a window for GCP to capture overflow enterprise AI workloads. Multiple data points confirm the supply-demand gap that underpins our relative value thesis.", confidence: 74 },
     ],
+    nextSteps: ["review-model", "ask-jess"],
   },
   {
     id: "2",
     theme: "Rate Path Uncertainty Pressures Financial Sector Multiples",
     category: "Macro / Rates",
+    themeAlignment: "challenges",
     summary:
       "The hawkish tone of the January Fed minutes caught markets off guard, pushing the 2-year yield up 8bps and repricing the terminal rate. Three FOMC members indicated a preference for holding rates steady through all of 2026 if services inflation does not materially improve. Concurrently, Goldman Sachs raised its S&P 500 year-end target to 6,500 on the back of strong earnings, but the bullish equity call is predicated on two 25bp cuts that now look increasingly unlikely. The disconnect between equity optimism and rates reality creates a tension that is most acutely felt in financials, where NII and IB fee recovery assumptions are being re-evaluated.",
     headlines: [
@@ -160,11 +183,13 @@ const themeClusters: ThemeCluster[] = [
       { ticker: "GS", company: "Goldman Sachs", sector: "Financials", currentTP: 510, suggestedTP: 485, priceAction: "lower", lastPrice: 498, thesisAlignment: "challenges", thesisSummary: "IB fee recovery driven by rate normalization", rationale: "Delayed easing means M&A and IPO pipeline remains suppressed. Goldman's own bullish equity target ironically depends on rate cuts that their rates desk sees as unlikely. IB recovery thesis pushed out by at least one quarter.", confidence: 72 },
       { ticker: "XOM", company: "Exxon Mobil", sector: "Energy", currentTP: 125, suggestedTP: null, priceAction: "maintain", lastPrice: 114, thesisAlignment: "confirms", thesisSummary: "Real asset inflation hedge", rationale: "Persistent inflation and hawkish Fed support our thesis that energy acts as a natural portfolio hedge in this regime. No TP change needed, but conviction increases with each hawkish data point.", confidence: 81 },
     ],
+    nextSteps: ["ask-jess", "see-past-analysis"],
   },
   {
     id: "3",
     theme: "GLP-1 Platform Expansion Reshapes Healthcare Landscape",
     category: "Healthcare",
+    themeAlignment: "confirms",
     summary:
       "Eli Lilly's SYNERGY-NASH Phase 3 trial data exceeded all expectations with a 68% resolution rate, blowing past Madrigal's 42% benchmark and opening a potentially massive new TAM for the GLP-1 drug class. The NASH market remains almost entirely untapped with only one approved therapy. Simultaneously, Apple's record $110B buyback and 18% services growth signal that mega-cap capital allocation priorities remain shareholder-friendly, though the immediate healthcare read-through is limited. The LLY data is the dominant signal here, with clear implications for competitive positioning across pharma and managed care names.",
     headlines: [
@@ -177,11 +202,13 @@ const themeClusters: ThemeCluster[] = [
       { ticker: "UNH", company: "UnitedHealth Group", sector: "Healthcare", currentTP: 590, suggestedTP: null, priceAction: "maintain", lastPrice: 568, thesisAlignment: "neutral", thesisSummary: "MCO cost management and membership growth", rationale: "NASH treatment adoption may modestly reduce chronic liver disease costs over time, but the effect is too long-dated and uncertain to revise near-term TP. Monitor for formulary decisions in H2.", confidence: 45 },
       { ticker: "JNJ", company: "Johnson & Johnson", sector: "Healthcare", currentTP: 168, suggestedTP: 158, priceAction: "lower", lastPrice: 162, thesisAlignment: "challenges", thesisSummary: "Pharma pipeline diversification", rationale: "LLY's strong NASH data further marginalizes JNJ's competitive position in metabolic disease. Madrigal's 12% drop shows market is repricing the entire competitive set. Our pipeline diversification thesis weakens as the GLP-1 moat deepens.", confidence: 70 },
     ],
+    nextSteps: ["review-model", "see-past-analysis", "ask-jess"],
   },
   {
     id: "4",
     theme: "Big Tech Capital Returns Signal Confidence in Cash Flow Durability",
     category: "Corporate",
+    themeAlignment: "confirms",
     summary:
       "Apple's authorization of an additional $110 billion in share repurchases -- the largest buyback program in corporate history -- alongside a 4% dividend increase sends a powerful signal about management's confidence in the durability of the services-led business model. Services revenue reached an all-time high of $26.7B, growing 18% year-over-year and now representing 28% of total revenue. The installed base of active devices exceeded 2.3 billion globally. Apple Intelligence adoption at 74% of iPhone 16 users suggests the AI feature set will drive a meaningful upgrade cycle. This theme reinforces the broader narrative that mega-cap tech companies are generating more cash than they can productively reinvest.",
     headlines: [
@@ -193,11 +220,13 @@ const themeClusters: ThemeCluster[] = [
       { ticker: "AAPL", company: "Apple Inc.", sector: "Technology", currentTP: 240, suggestedTP: 260, priceAction: "raise", lastPrice: 228, thesisAlignment: "confirms", thesisSummary: "Services margin expansion + capital return", rationale: "Record buyback accelerates EPS compounding. Services at 28% of revenue with higher margins confirms the mix-shift thesis. Three data points -- buyback, services record, AI adoption -- all reinforce. Raise TP to reflect buyback-adjusted earnings growth.", confidence: 88 },
       { ticker: "META", company: "Meta Platforms", sector: "Technology", currentTP: 590, suggestedTP: null, priceAction: "maintain", lastPrice: 572, thesisAlignment: "neutral", thesisSummary: "AI-driven ad targeting efficiency", rationale: "AAPL's capital return story is company-specific and doesn't directly inform our META ad monetization thesis. No cross-read.", confidence: 40 },
     ],
+    nextSteps: ["review-model"],
   },
   {
     id: "5",
     theme: "Permian Basin Consolidation Enters Final Phase",
     category: "Energy",
+    themeAlignment: "confirms",
     summary:
       "Exxon's $8.4B acquisition of 120,000 net acres in the Delaware Basin marks a decisive step in the Permian consolidation endgame. The deal makes Exxon the largest single-operator acreage holder in the basin, with breakeven economics below $40/barrel WTI providing a substantial margin of safety. Analysts expect Chevron and ConocoPhillips to respond with deals of their own as remaining high-quality acreage becomes scarce. The deal prices Permian acreage at a premium to recent transactions, effectively resetting comparable valuations for all operators in the basin.",
     headlines: [
@@ -209,11 +238,13 @@ const themeClusters: ThemeCluster[] = [
       { ticker: "XOM", company: "Exxon Mobil", sector: "Energy", currentTP: 125, suggestedTP: 138, priceAction: "raise", lastPrice: 114, thesisAlignment: "confirms", thesisSummary: "Permian consolidation and FCF growth", rationale: "Accretive acquisition at sub-$40 breakeven validates our Permian consolidation thesis. Record acreage pricing confirms scarcity value. Raise TP to reflect added production capacity and improved cost curve positioning.", confidence: 86 },
       { ticker: "CVX", company: "Chevron Corp.", sector: "Energy", currentTP: 180, suggestedTP: 188, priceAction: "raise", lastPrice: 168, thesisAlignment: "confirms", thesisSummary: "Permian acreage value re-rating", rationale: "XOM deal reprices Permian acreage higher, which directly benefits CVX's existing Delaware Basin position. Multiple sources confirm CVX is evaluating responsive M&A. Modest TP increase on comp-based re-rating.", confidence: 72 },
     ],
+    nextSteps: ["see-past-analysis", "review-model"],
   },
   {
     id: "6",
     theme: "China Tech Nationalism Escalates Geopolitical Risk for US Semis",
     category: "Geopolitical",
+    themeAlignment: "challenges",
     summary:
       "Beijing's $150B stimulus package for domestic semiconductor manufacturing and AI development represents a significant escalation in China's push for tech self-sufficiency. The package targets mature node chips (28nm and above) where Chinese foundries are rapidly closing the gap, and includes new provisions restricting foreign cloud providers from serving Chinese government agencies. US chipmakers face dual headwinds: increased competition in mature nodes and potential loss of Asia-Pacific cloud revenue. The timing -- alongside NVIDIA's strong earnings -- creates a mixed signal for AI chip names with significant China exposure.",
     headlines: [
@@ -225,6 +256,7 @@ const themeClusters: ThemeCluster[] = [
       { ticker: "NVDA", company: "NVIDIA Corp.", sector: "Technology", currentTP: 1025, suggestedTP: null, priceAction: "maintain", lastPrice: 878, thesisAlignment: "challenges", thesisSummary: "Uncontested AI chip leadership", rationale: "China stimulus accelerates domestic chip alternatives, adding long-term competitive risk. Three separate policy actions signal a coordinated effort. No TP change yet given strong near-term demand, but flagging as a risk to monitor closely.", confidence: 55 },
       { ticker: "AAPL", company: "Apple Inc.", sector: "Technology", currentTP: 260, suggestedTP: 250, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "Greater China revenue stability", rationale: "Cloud restrictions and tech nationalism add pressure to AAPL's 18% China revenue exposure. Three policy vectors -- subsidies, cloud restrictions, foundry buildout -- all point the same direction. Lower TP modestly to reflect incremental geopolitical risk premium.", confidence: 65 },
     ],
+    nextSteps: ["ask-jess", "review-model", "see-past-analysis"],
   },
 ]
 
@@ -236,53 +268,46 @@ const PRICE_ACTION_CONFIG: Record<PriceAction, { label: string; color: string; b
   maintain: { label: "Maintain TP", color: "text-muted-foreground", bgColor: "bg-muted", Icon: Minus },
 }
 
-const THESIS_CONFIG: Record<ThesisAlignment, { label: string; color: string; bgColor: string; Icon: typeof Check }> = {
-  confirms: { label: "In-line with thesis", color: "text-positive", bgColor: "bg-positive/8", Icon: Check },
-  challenges: { label: "Against thesis", color: "text-negative", bgColor: "bg-negative/8", Icon: AlertTriangle },
-  neutral: { label: "Thesis unaffected", color: "text-muted-foreground", bgColor: "bg-muted/60", Icon: Minus },
-}
-
-function ConfidenceSignal({ value }: { value: number }) {
-  const color =
-    value >= 80 ? "text-positive" :
-    value >= 60 ? "text-[#c9a227]" :
-    "text-muted-foreground"
-  const bgColor =
-    value >= 80 ? "bg-positive/10" :
-    value >= 60 ? "bg-[#c9a227]/10" :
-    "bg-muted"
-  const label =
-    value >= 80 ? "High" :
-    value >= 60 ? "Med" :
-    "Low"
-
+/** Hoverable wrapper that shows a quote icon on hover to send content to chat */
+function QuotableWrapper({
+  children,
+  quotableText,
+  onQuote,
+  className,
+}: {
+  children: React.ReactNode
+  quotableText: string
+  onQuote?: (text: string) => void
+  className?: string
+}) {
   return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-              bgColor,
-              color,
-            )}
-          >
-            <Gauge className="h-2.5 w-2.5" />
-            {value}
-            <span className="text-[9px] font-medium opacity-70">{label}</span>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="bg-popover text-popover-foreground border-border">
-          <p className="text-xs">Confidence: {value}/100 — Based on source count, data convergence, and signal strength</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className={cn("group/quote relative", className)}>
+      {children}
+      {onQuote && (
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => onQuote(quotableText)}
+                className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground/0 transition-all group-hover/quote:text-muted-foreground/50 hover:!text-foreground hover:!bg-accent opacity-0 group-hover/quote:opacity-100"
+                aria-label="Quote in AI chat"
+              >
+                <Quote className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="bg-popover text-popover-foreground border-border">
+              <p className="text-xs">Send to AI Assistant</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+    </div>
   )
 }
 
-function InsightRow({ insight, focusFilter = "none" }: { insight: StockInsight; focusFilter?: FocusFilter }) {
+function InsightRow({ insight, focusFilter = "none", onQuote }: { insight: StockInsight; focusFilter?: FocusFilter; onQuote?: (text: string) => void }) {
   const priceConfig = PRICE_ACTION_CONFIG[insight.priceAction]
-  const thesisConfig = THESIS_CONFIG[insight.thesisAlignment]
   const excelPath = getExcelPath(insight.ticker, insight.sector)
   const tpChange = insight.suggestedTP ? insight.suggestedTP - insight.currentTP : 0
   const tpChangePercent = insight.suggestedTP ? ((tpChange / insight.currentTP) * 100) : 0
@@ -293,111 +318,103 @@ function InsightRow({ insight, focusFilter = "none" }: { insight: StockInsight; 
   const isActive = focusFilter === "none" || insightMatchesFocusWithWeight(insight, focusFilter)
   const isFocusMode = focusFilter !== "none"
 
+  const quotableText = `${insight.ticker} (${insight.company}): TP $${insight.currentTP}${insight.suggestedTP ? ` -> $${insight.suggestedTP}` : ''}, Last $${insight.lastPrice}. Thesis: ${insight.thesisSummary}. ${insight.rationale}`
+
   return (
-    <div
-      className={cn(
-        "py-3 first:pt-1.5 last:pb-1.5 rounded-md transition-all duration-300",
-        isFocusMode && isActive && "relative ring-1 ring-foreground/10 bg-gradient-to-r from-foreground/[0.03] to-transparent my-1 px-3 -mx-1",
-        isFocusMode && !isActive && "opacity-25 saturate-0",
-      )}
-    >
-      {/* Top: Ticker, confidence, thesis badge, TP action badge, excel button */}
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="font-mono text-xs font-semibold text-foreground">{insight.ticker}</span>
-        <span className="text-[11px] text-muted-foreground/70">{insight.company}</span>
-        <div className="ml-auto flex items-center gap-1.5">
-          <ConfidenceSignal value={insight.confidence} />
-          {/* Thesis alignment badge */}
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
-              thesisConfig.bgColor,
-              thesisConfig.color,
-            )}
-          >
-            <thesisConfig.Icon className="h-2.5 w-2.5" />
-            {thesisConfig.label}
-          </span>
-          {/* Price action badge */}
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-              priceConfig.bgColor,
-              priceConfig.color,
-            )}
-          >
-            <priceConfig.Icon className="h-2.5 w-2.5" />
-            {priceConfig.label}
-          </span>
-          {/* Excel link */}
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href={excelPath}
-                  className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-[#21a366]/30 bg-[#21a366]/10 px-2 py-0.5 text-[10px] font-medium text-[#21a366] transition-colors hover:bg-[#21a366]/20 hover:border-[#21a366]/50"
-                  aria-label={`Open ${insight.ticker} position model spreadsheet`}
-                >
-                  <FileSpreadsheet className="h-3 w-3" />
-                  See model
-                </a>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="bg-popover text-popover-foreground border-border">
-                <p className="text-xs font-mono">Positions / {insight.sector} / {insight.ticker.toLowerCase()}_model.xlsx</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+    <QuotableWrapper quotableText={quotableText} onQuote={onQuote}>
+      <div
+        className={cn(
+          "py-3 first:pt-1.5 last:pb-1.5 rounded-md transition-all duration-300",
+          isFocusMode && isActive && "relative ring-1 ring-foreground/10 bg-gradient-to-r from-foreground/[0.03] to-transparent my-1 px-3 -mx-1",
+          isFocusMode && !isActive && "opacity-25 saturate-0",
+        )}
+      >
+        {/* Top: Ticker, price action badge */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="font-mono text-xs font-semibold text-foreground">{insight.ticker}</span>
+          <span className="text-[11px] text-muted-foreground/70">{insight.company}</span>
+          <div className="ml-auto flex items-center gap-1.5">
+            {/* Price action badge */}
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                priceConfig.bgColor,
+                priceConfig.color,
+              )}
+            >
+              <priceConfig.Icon className="h-2.5 w-2.5" />
+              {priceConfig.label}
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Middle: Target price row */}
-      <div className="flex items-center gap-4 mb-1">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Last</span>
-          <span className="font-mono text-[11px] text-muted-foreground">${insight.lastPrice}</span>
+        {/* Middle: Target price row */}
+        <div className="flex items-center gap-4 mb-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Last</span>
+            <span className="font-mono text-[11px] text-muted-foreground">${insight.lastPrice}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">TP</span>
+            <span className="font-mono text-[11px] text-muted-foreground">${insight.currentTP}</span>
+            {insight.suggestedTP && (
+              <>
+                <span className="text-muted-foreground/40">{"-->"}</span>
+                <span className={cn("font-mono text-[11px] font-semibold", priceConfig.color)}>
+                  ${insight.suggestedTP}
+                </span>
+                <span className={cn("font-mono text-[10px]", priceConfig.color)}>
+                  ({tpChangePercent > 0 ? "+" : ""}{tpChangePercent.toFixed(1)}%)
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Upside</span>
+            <span className={cn("font-mono text-[11px] font-medium", upside > 0 ? "text-positive" : "text-negative")}>
+              {upside > 0 ? "+" : ""}{upside.toFixed(1)}%
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">TP</span>
-          <span className="font-mono text-[11px] text-muted-foreground">${insight.currentTP}</span>
-          {insight.suggestedTP && (
-            <>
-              <span className="text-muted-foreground/40">{"-->"}</span>
-              <span className={cn("font-mono text-[11px] font-semibold", priceConfig.color)}>
-                ${insight.suggestedTP}
-              </span>
-              <span className={cn("font-mono text-[10px]", priceConfig.color)}>
-                ({tpChangePercent > 0 ? "+" : ""}{tpChangePercent.toFixed(1)}%)
-              </span>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Upside</span>
-          <span className={cn("font-mono text-[11px] font-medium", upside > 0 ? "text-positive" : "text-negative")}>
-            {upside > 0 ? "+" : ""}{upside.toFixed(1)}%
-          </span>
-        </div>
-      </div>
 
-      {/* Bottom: Thesis + Rationale */}
-      <div className="flex items-start gap-2">
-        <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground/60 pt-px">Thesis</span>
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className="text-[11px] leading-relaxed text-muted-foreground cursor-default">
-                <span className={cn("font-medium", thesisConfig.color)}>{insight.thesisSummary}</span>
-                <span className="text-muted-foreground/60">{" -- "}</span>
-                <span>{insight.rationale}</span>
-              </p>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-sm bg-popover text-popover-foreground border-border">
-              <p className="text-xs leading-relaxed">{insight.rationale}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {/* Thesis + Rationale */}
+        <div className="flex items-start gap-2">
+          <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground/60 pt-px">Thesis</span>
+          <div>
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+              <span className={cn("font-medium", priceConfig.color)}>{insight.thesisSummary}</span>
+              <span className="text-muted-foreground/60">{" -- "}</span>
+              <span>{insight.rationale}</span>
+            </p>
+            {/* Action buttons below thesis */}
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <a
+                href={excelPath}
+                className="inline-flex items-center gap-1 rounded-md border border-[#21a366]/30 bg-[#21a366]/10 px-2 py-0.5 text-[10px] font-medium text-[#21a366] transition-colors hover:bg-[#21a366]/20 hover:border-[#21a366]/50"
+                aria-label={`Open ${insight.ticker} position model spreadsheet`}
+              >
+                <FileSpreadsheet className="h-3 w-3" />
+                See Model
+              </a>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-md border border-[#D24726]/30 bg-[#D24726]/10 px-2 py-0.5 text-[10px] font-medium text-[#D24726] transition-colors hover:bg-[#D24726]/20 hover:border-[#D24726]/50"
+              >
+                <Presentation className="h-3 w-3" />
+                See Deck
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <LayoutDashboard className="h-3 w-3" />
+                Open Workspace
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </QuotableWrapper>
   )
 }
 
@@ -409,28 +426,45 @@ function CategoryBadge({ category }: { category: string }) {
   )
 }
 
-function ThemeCard({ cluster }: { cluster: ThemeCluster }) {
+function ThemeCard({ cluster, onQuote }: { cluster: ThemeCluster; onQuote?: (text: string) => void }) {
   const uniqueSources = [...new Set(cluster.headlines.map((h) => h.source))]
   const sourceCount = uniqueSources.length
+  const themeAlignConfig = THEME_ALIGNMENT_CONFIG[cluster.themeAlignment]
+
+  const headlinesQuotable = cluster.headlines.map((h) => `- ${h.title} (${h.source}, ${h.time})`).join("\n")
+  const themeQuotable = `Theme: ${cluster.theme}\nCategory: ${cluster.category}\n\n${cluster.summary}`
 
   return (
     <article className="group border-b border-border px-6 py-5 transition-colors hover:bg-card/60">
       {/* Theme header */}
-      <div className="mb-2 flex items-center gap-2.5">
-        <CategoryBadge category={cluster.category} />
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          {cluster.headlines[0].time}
-        </span>
-        <div className="flex items-center gap-1">
-          {uniqueSources.map((source) => (
-            <SourceBadge key={source} source={source} />
-          ))}
+      <QuotableWrapper quotableText={`${cluster.theme}: ${cluster.summary}`} onQuote={onQuote} className="mb-2">
+        <div className="flex items-center gap-2.5 pr-6">
+          <CategoryBadge category={cluster.category} />
+          {/* Theme-level thesis alignment badge */}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+              themeAlignConfig.bgColor,
+              themeAlignConfig.color,
+            )}
+          >
+            <themeAlignConfig.Icon className="h-2.5 w-2.5" />
+            {themeAlignConfig.label}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            {cluster.headlines[0].time}
+          </span>
+          <div className="flex items-center gap-1">
+            {uniqueSources.map((source) => (
+              <SourceBadge key={source} source={source} />
+            ))}
+          </div>
+          <span className="text-[10px] text-muted-foreground/60">
+            {sourceCount} source{sourceCount !== 1 ? "s" : ""}
+          </span>
         </div>
-        <span className="text-[10px] text-muted-foreground/60">
-          {sourceCount} source{sourceCount !== 1 ? "s" : ""}
-        </span>
-      </div>
+      </QuotableWrapper>
 
       {/* Theme title */}
       <h3 className="mb-3 text-[15px] font-semibold leading-snug text-foreground">
@@ -438,32 +472,36 @@ function ThemeCard({ cluster }: { cluster: ThemeCluster }) {
       </h3>
 
       {/* Headline cluster */}
-      <div className="mb-3 rounded-md border border-border/60 bg-secondary/30 px-3 py-2">
-        <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1 block">
-          {cluster.headlines.length} related headlines
-        </span>
-        <ul className="space-y-1">
-          {cluster.headlines.map((h, i) => (
-            <li key={i} className="flex items-start gap-2 group/headline">
-              <SourceBadge source={h.source} />
-              <span className="text-[12px] leading-snug text-foreground/80 flex-1">{h.title}</span>
-              <span className="text-[10px] text-muted-foreground/50 shrink-0">{h.time}</span>
-              <button
-                type="button"
-                className="shrink-0 rounded p-0.5 text-muted-foreground/40 opacity-0 transition-all hover:bg-accent hover:text-foreground group-hover/headline:opacity-100"
-                aria-label="Open article"
-              >
-                <ExternalLink className="h-3 w-3" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <QuotableWrapper quotableText={headlinesQuotable} onQuote={onQuote} className="mb-3">
+        <div className="rounded-md border border-border/60 bg-secondary/30 px-3 py-2 pr-8">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1 block">
+            {cluster.headlines.length} related headlines
+          </span>
+          <ul className="space-y-1">
+            {cluster.headlines.map((h, i) => (
+              <li key={i} className="flex items-start gap-2 group/headline">
+                <SourceBadge source={h.source} />
+                <span className="text-[12px] leading-snug text-foreground/80 flex-1">{h.title}</span>
+                <span className="text-[10px] text-muted-foreground/50 shrink-0">{h.time}</span>
+                <button
+                  type="button"
+                  className="shrink-0 rounded p-0.5 text-muted-foreground/40 opacity-0 transition-all hover:bg-accent hover:text-foreground group-hover/headline:opacity-100"
+                  aria-label="Open article"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </QuotableWrapper>
 
       {/* Theme synthesis */}
-      <p className="mb-4 text-[13px] leading-relaxed text-muted-foreground">
-        {cluster.summary}
-      </p>
+      <QuotableWrapper quotableText={themeQuotable} onQuote={onQuote} className="mb-4">
+        <p className="text-[13px] leading-relaxed text-muted-foreground pr-6">
+          {cluster.summary}
+        </p>
+      </QuotableWrapper>
 
       {/* Stock Insights */}
       <div className="rounded-lg border border-border bg-secondary/40 px-4 py-2">
@@ -474,10 +512,30 @@ function ThemeCard({ cluster }: { cluster: ThemeCluster }) {
           <span className="text-[10px] text-muted-foreground/50">
             {cluster.insights.length} position{cluster.insights.length !== 1 ? "s" : ""} affected
           </span>
+          {/* Next steps */}
+          <div className="ml-auto flex items-center gap-1.5">
+            {cluster.nextSteps.map((step) => {
+              const config = NEXT_STEP_CONFIG[step]
+              return (
+                <button
+                  key={step}
+                  type="button"
+                  className={cn(
+                    "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors",
+                    step === "ask-jess"
+                      ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
+                      : "border border-border bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {config.shortLabel}
+                </button>
+              )
+            })}
+          </div>
         </div>
         <div className="divide-y divide-border/40">
           {cluster.insights.map((insight) => (
-            <InsightRow key={insight.ticker} insight={insight} />
+            <InsightRow key={insight.ticker} insight={insight} onQuote={onQuote} />
           ))}
         </div>
       </div>
@@ -485,7 +543,7 @@ function ThemeCard({ cluster }: { cluster: ThemeCluster }) {
   )
 }
 
-export function MorningBrief() {
+export function MorningBrief({ onQuoteToChat }: { onQuoteToChat?: (text: string) => void }) {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -528,7 +586,7 @@ export function MorningBrief() {
       <ScrollArea className="flex-1">
         <div>
           {themeClusters.map((cluster) => (
-            <ThemeCard key={cluster.id} cluster={cluster} />
+            <ThemeCard key={cluster.id} cluster={cluster} onQuote={onQuoteToChat} />
           ))}
         </div>
       </ScrollArea>
