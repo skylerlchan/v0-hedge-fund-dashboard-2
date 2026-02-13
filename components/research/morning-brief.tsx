@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import {
   Clock,
   ExternalLink,
@@ -8,10 +9,12 @@ import {
   ArrowUp,
   ArrowDown,
   Check,
+  X,
   AlertTriangle,
   Quote,
   Presentation,
   LayoutDashboard,
+  MessageSquare,
 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -25,7 +28,7 @@ import { cn } from "@/lib/utils"
 type ThesisAlignment = "confirms" | "challenges" | "neutral"
 type PriceAction = "raise" | "lower" | "maintain"
 
-type NextStepAction = "ask-jess" | "review-model" | "see-past-analysis"
+type NextStepType = "approve" | "reject" | "ask-analyst"
 
 interface StockInsight {
   ticker: string
@@ -38,7 +41,6 @@ interface StockInsight {
   thesisAlignment: ThesisAlignment
   thesisSummary: string
   rationale: string
-  confidence: number
 }
 
 interface Headline {
@@ -55,7 +57,7 @@ interface ThemeCluster {
   summary: string
   headlines: Headline[]
   insights: StockInsight[]
-  nextSteps: NextStepAction[]
+  nextStep: NextStepType
 }
 
 export type FocusFilter =
@@ -68,31 +70,10 @@ export type FocusFilter =
   | "lower-tp"
   | "large-holdings"
 
-function insightMatchesFocus(insight: StockInsight, filter: FocusFilter): boolean {
-  switch (filter) {
-    case "none": return true
-    case "high-confidence": return insight.confidence >= 80
-    case "against-thesis": return insight.thesisAlignment === "challenges"
-    case "in-line": return insight.thesisAlignment === "confirms"
-    case "no-change": return insight.priceAction === "maintain"
-    case "raise-tp": return insight.priceAction === "raise"
-    case "lower-tp": return insight.priceAction === "lower"
-    case "large-holdings": return insight.lastPrice > 0
-    default: return true
-  }
-}
-
 const PORTFOLIO_WEIGHT: Record<string, number> = {
   NVDA: 6.2, MSFT: 5.1, GOOGL: 3.8, AAPL: 5.4, META: 3.1,
   LLY: 4.1, UNH: 3.6, JNJ: 2.4, XOM: 3.2, CVX: 2.1,
-  JPM: 4.5, GS: 2.8,
-}
-
-function insightMatchesFocusWithWeight(insight: StockInsight, filter: FocusFilter): boolean {
-  if (filter === "large-holdings") {
-    return (PORTFOLIO_WEIGHT[insight.ticker] ?? 0) >= 2.5
-  }
-  return insightMatchesFocus(insight, filter)
+  JPM: 4.5, GS: 2.8, AMZN: 4.8, TSLA: 2.9, CRM: 1.8,
 }
 
 function getExcelPath(ticker: string, sector: string) {
@@ -109,6 +90,8 @@ const SOURCE_COLORS: Record<string, { bg: string; text: string; abbr: string }> 
   "Nikkei Asia": { bg: "bg-[#c0392b]/15", text: "text-[#c0392b]", abbr: "NK" },
   "Barron's": { bg: "bg-[#1a6b3c]/15", text: "text-[#1a6b3c]", abbr: "BA" },
   "The Information": { bg: "bg-[#6b5b95]/15", text: "text-[#6b5b95]", abbr: "TI" },
+  "Axios": { bg: "bg-[#0052FF]/15", text: "text-[#0052FF]", abbr: "AX" },
+  "Semafor": { bg: "bg-[#00C853]/15", text: "text-[#00C853]", abbr: "SM" },
 }
 
 function SourceBadge({ source }: { source: string }) {
@@ -125,14 +108,6 @@ function SourceBadge({ source }: { source: string }) {
       {config.abbr}
     </span>
   )
-}
-
-// --------------- NEXT STEPS CONFIG ---------------
-
-const NEXT_STEP_CONFIG: Record<NextStepAction, { label: string; shortLabel: string }> = {
-  "ask-jess": { label: "Ask Jess to Analyze", shortLabel: "Ask Jess" },
-  "review-model": { label: "Review Model", shortLabel: "Review Model" },
-  "see-past-analysis": { label: "See Past Analysis", shortLabel: "Past Analysis" },
 }
 
 // --------------- THESIS ALIGNMENT for theme level ---------------
@@ -152,19 +127,15 @@ const themeClusters: ThemeCluster[] = [
     category: "AI / Semis",
     themeAlignment: "confirms",
     summary:
-      "A cluster of data points across earnings, supply chain reports, and capex guidance revisions all point to the same conclusion: the AI infrastructure buildout is running hotter and longer than the market anticipated six months ago. NVIDIA's Q1 revenue guide of $43B beat consensus by 15%, while Microsoft disclosed a 40% sequential increase in unfulfilled Azure AI commitments. Separately, Taiwanese supply chain sources report Blackwell orders extending into 2027, and Morgan Stanley's semiconductor team raised their industry capex estimate for 2026 by 18%. The convergence of bottom-up company data and top-down industry checks creates an unusually strong signal.",
+      "A cluster of data points across earnings, supply chain reports, and capex guidance revisions all point to the same conclusion: the AI infrastructure buildout is running hotter and longer than the market anticipated six months ago. NVIDIA's Q1 revenue guide of $43B beat consensus by 15%, while Microsoft disclosed a 40% sequential increase in unfulfilled Azure AI commitments. Separately, Taiwanese supply chain sources report Blackwell orders extending into 2027, and Morgan Stanley's semiconductor team raised their industry capex estimate for 2026 by 18%.",
     headlines: [
       { title: "NVIDIA Forecasts Record Revenue on Surging AI Chip Demand", source: "Bloomberg", time: "12 min ago" },
       { title: "Microsoft Azure AI Backlog Grows 40% as Capacity Lags Demand", source: "Bloomberg", time: "4h ago" },
       { title: "TSMC Reports Surge in Blackwell Wafer Orders Through 2027", source: "Reuters", time: "2h ago" },
       { title: "Morgan Stanley Raises 2026 Semi Capex Estimate by 18%", source: "Barron's", time: "3h ago" },
     ],
-    insights: [
-      { ticker: "NVDA", company: "NVIDIA Corp.", sector: "Technology", currentTP: 920, suggestedTP: 1025, priceAction: "raise", lastPrice: 878, thesisAlignment: "confirms", thesisSummary: "AI infrastructure supercycle intact", rationale: "Four independent signals confirm Blackwell demand extends the cycle 18-24 months beyond prior estimates. Revenue beat, supply chain checks, and sell-side revisions all align. Raise TP to reflect higher through-cycle earnings power.", confidence: 92 },
-      { ticker: "MSFT", company: "Microsoft Corp.", sector: "Technology", currentTP: 480, suggestedTP: 465, priceAction: "lower", lastPrice: 462, thesisAlignment: "challenges", thesisSummary: "Azure as primary AI monetization vehicle", rationale: "Azure growth decelerated to 28% despite the demand surge, suggesting capacity constraints are binding. Backlog growth is encouraging long-term but near-term revenue conversion is slower than thesis assumed.", confidence: 68 },
-      { ticker: "GOOGL", company: "Alphabet Inc.", sector: "Technology", currentTP: 195, suggestedTP: 210, priceAction: "raise", lastPrice: 182, thesisAlignment: "confirms", thesisSummary: "GCP share gains vs. Azure", rationale: "MSFT capacity constraints create a window for GCP to capture overflow enterprise AI workloads. Multiple data points confirm the supply-demand gap that underpins our relative value thesis.", confidence: 74 },
-    ],
-    nextSteps: ["review-model", "ask-jess"],
+    insights: [],
+    nextStep: "approve",
   },
   {
     id: "2",
@@ -172,18 +143,17 @@ const themeClusters: ThemeCluster[] = [
     category: "Macro / Rates",
     themeAlignment: "challenges",
     summary:
-      "The hawkish tone of the January Fed minutes caught markets off guard, pushing the 2-year yield up 8bps and repricing the terminal rate. Three FOMC members indicated a preference for holding rates steady through all of 2026 if services inflation does not materially improve. Concurrently, Goldman Sachs raised its S&P 500 year-end target to 6,500 on the back of strong earnings, but the bullish equity call is predicated on two 25bp cuts that now look increasingly unlikely. The disconnect between equity optimism and rates reality creates a tension that is most acutely felt in financials, where NII and IB fee recovery assumptions are being re-evaluated.",
+      "The hawkish tone of the January Fed minutes caught markets off guard, pushing the 2-year yield up 8bps and repricing the terminal rate. Three FOMC members indicated a preference for holding rates steady through all of 2026 if services inflation does not materially improve. The disconnect between equity optimism and rates reality creates a tension most acutely felt in financials, where NII and IB fee recovery assumptions are being re-evaluated.",
     headlines: [
       { title: "Fed Minutes Signal Cautious Approach to Rate Cuts in 2026", source: "Reuters", time: "34 min ago" },
       { title: "Goldman Sachs Raises S&P 500 Year-End Target to 6,500", source: "CNBC", time: "5h ago" },
       { title: "2-Year Treasury Yield Climbs to 4.52% on Hawkish Fed Tone", source: "Bloomberg", time: "1h ago" },
     ],
     insights: [
-      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 235, suggestedTP: 220, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "NII expansion from rate normalization", rationale: "Our bull case assumed two 25bp cuts by mid-year boosting loan demand. Three Fed members now prefer no cuts at all in 2026. Higher-for-longer erodes the NII tailwind and compresses the multiple. Lower TP.", confidence: 78 },
-      { ticker: "GS", company: "Goldman Sachs", sector: "Financials", currentTP: 510, suggestedTP: 485, priceAction: "lower", lastPrice: 498, thesisAlignment: "challenges", thesisSummary: "IB fee recovery driven by rate normalization", rationale: "Delayed easing means M&A and IPO pipeline remains suppressed. Goldman's own bullish equity target ironically depends on rate cuts that their rates desk sees as unlikely. IB recovery thesis pushed out by at least one quarter.", confidence: 72 },
-      { ticker: "XOM", company: "Exxon Mobil", sector: "Energy", currentTP: 125, suggestedTP: null, priceAction: "maintain", lastPrice: 114, thesisAlignment: "confirms", thesisSummary: "Real asset inflation hedge", rationale: "Persistent inflation and hawkish Fed support our thesis that energy acts as a natural portfolio hedge in this regime. No TP change needed, but conviction increases with each hawkish data point.", confidence: 81 },
+      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 235, suggestedTP: 220, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "NII expansion from rate normalization", rationale: "Our bull case assumed two 25bp cuts by mid-year boosting loan demand. Three Fed members now prefer no cuts at all in 2026. Higher-for-longer erodes the NII tailwind and compresses the multiple." },
+      { ticker: "GS", company: "Goldman Sachs", sector: "Financials", currentTP: 510, suggestedTP: 485, priceAction: "lower", lastPrice: 498, thesisAlignment: "challenges", thesisSummary: "IB fee recovery driven by rate normalization", rationale: "Delayed easing means M&A and IPO pipeline remains suppressed. Goldman's own bullish equity target ironically depends on rate cuts that their rates desk sees as unlikely." },
     ],
-    nextSteps: ["ask-jess", "see-past-analysis"],
+    nextStep: "ask-analyst",
   },
   {
     id: "3",
@@ -191,18 +161,14 @@ const themeClusters: ThemeCluster[] = [
     category: "Healthcare",
     themeAlignment: "confirms",
     summary:
-      "Eli Lilly's SYNERGY-NASH Phase 3 trial data exceeded all expectations with a 68% resolution rate, blowing past Madrigal's 42% benchmark and opening a potentially massive new TAM for the GLP-1 drug class. The NASH market remains almost entirely untapped with only one approved therapy. Simultaneously, Apple's record $110B buyback and 18% services growth signal that mega-cap capital allocation priorities remain shareholder-friendly, though the immediate healthcare read-through is limited. The LLY data is the dominant signal here, with clear implications for competitive positioning across pharma and managed care names.",
+      "Eli Lilly's SYNERGY-NASH Phase 3 trial data exceeded all expectations with a 68% resolution rate, blowing past Madrigal's 42% benchmark and opening a potentially massive new TAM for the GLP-1 drug class. The NASH market remains almost entirely untapped with only one approved therapy. The LLY data is the dominant signal here, with clear implications for competitive positioning across pharma and managed care names.",
     headlines: [
       { title: "Eli Lilly GLP-1 Drug Mounjaro Shows Promise in NASH Trial", source: "STAT News", time: "1h ago" },
       { title: "NASH Treatment Market Projected to Reach $40B by 2032", source: "Reuters", time: "2h ago" },
       { title: "Madrigal Pharma Shares Drop 12% on Competitive Data Read", source: "Bloomberg", time: "1h ago" },
     ],
-    insights: [
-      { ticker: "LLY", company: "Eli Lilly & Co.", sector: "Healthcare", currentTP: 880, suggestedTP: 1020, priceAction: "raise", lastPrice: 812, thesisAlignment: "confirms", thesisSummary: "GLP-1 platform optionality into adjacencies", rationale: "NASH indication materially expands TAM beyond our base case. Trial data exceeds bear-case efficacy hurdle by 26pts across three corroborating data points. Raise TP significantly to reflect new peak revenue estimates of $8-12B incremental.", confidence: 94 },
-      { ticker: "UNH", company: "UnitedHealth Group", sector: "Healthcare", currentTP: 590, suggestedTP: null, priceAction: "maintain", lastPrice: 568, thesisAlignment: "neutral", thesisSummary: "MCO cost management and membership growth", rationale: "NASH treatment adoption may modestly reduce chronic liver disease costs over time, but the effect is too long-dated and uncertain to revise near-term TP. Monitor for formulary decisions in H2.", confidence: 45 },
-      { ticker: "JNJ", company: "Johnson & Johnson", sector: "Healthcare", currentTP: 168, suggestedTP: 158, priceAction: "lower", lastPrice: 162, thesisAlignment: "challenges", thesisSummary: "Pharma pipeline diversification", rationale: "LLY's strong NASH data further marginalizes JNJ's competitive position in metabolic disease. Madrigal's 12% drop shows market is repricing the entire competitive set. Our pipeline diversification thesis weakens as the GLP-1 moat deepens.", confidence: 70 },
-    ],
-    nextSteps: ["review-model", "see-past-analysis", "ask-jess"],
+    insights: [],
+    nextStep: "approve",
   },
   {
     id: "4",
@@ -210,17 +176,14 @@ const themeClusters: ThemeCluster[] = [
     category: "Corporate",
     themeAlignment: "confirms",
     summary:
-      "Apple's authorization of an additional $110 billion in share repurchases -- the largest buyback program in corporate history -- alongside a 4% dividend increase sends a powerful signal about management's confidence in the durability of the services-led business model. Services revenue reached an all-time high of $26.7B, growing 18% year-over-year and now representing 28% of total revenue. The installed base of active devices exceeded 2.3 billion globally. Apple Intelligence adoption at 74% of iPhone 16 users suggests the AI feature set will drive a meaningful upgrade cycle. This theme reinforces the broader narrative that mega-cap tech companies are generating more cash than they can productively reinvest.",
+      "Apple's authorization of an additional $110 billion in share repurchases -- the largest buyback program in corporate history -- alongside a 4% dividend increase sends a powerful signal about management's confidence in the durability of the services-led business model. Services revenue reached an all-time high of $26.7B, growing 18% year-over-year and now representing 28% of total revenue.",
     headlines: [
       { title: "Apple Announces $110B Share Buyback Program, Largest in History", source: "WSJ", time: "2h ago" },
       { title: "Apple Services Revenue Hits All-Time High of $26.7B", source: "Bloomberg", time: "2h ago" },
       { title: "Apple Intelligence Adoption Reaches 74% of iPhone 16 Users", source: "The Information", time: "3h ago" },
     ],
-    insights: [
-      { ticker: "AAPL", company: "Apple Inc.", sector: "Technology", currentTP: 240, suggestedTP: 260, priceAction: "raise", lastPrice: 228, thesisAlignment: "confirms", thesisSummary: "Services margin expansion + capital return", rationale: "Record buyback accelerates EPS compounding. Services at 28% of revenue with higher margins confirms the mix-shift thesis. Three data points -- buyback, services record, AI adoption -- all reinforce. Raise TP to reflect buyback-adjusted earnings growth.", confidence: 88 },
-      { ticker: "META", company: "Meta Platforms", sector: "Technology", currentTP: 590, suggestedTP: null, priceAction: "maintain", lastPrice: 572, thesisAlignment: "neutral", thesisSummary: "AI-driven ad targeting efficiency", rationale: "AAPL's capital return story is company-specific and doesn't directly inform our META ad monetization thesis. No cross-read.", confidence: 40 },
-    ],
-    nextSteps: ["review-model"],
+    insights: [],
+    nextStep: "approve",
   },
   {
     id: "5",
@@ -228,17 +191,14 @@ const themeClusters: ThemeCluster[] = [
     category: "Energy",
     themeAlignment: "confirms",
     summary:
-      "Exxon's $8.4B acquisition of 120,000 net acres in the Delaware Basin marks a decisive step in the Permian consolidation endgame. The deal makes Exxon the largest single-operator acreage holder in the basin, with breakeven economics below $40/barrel WTI providing a substantial margin of safety. Analysts expect Chevron and ConocoPhillips to respond with deals of their own as remaining high-quality acreage becomes scarce. The deal prices Permian acreage at a premium to recent transactions, effectively resetting comparable valuations for all operators in the basin.",
+      "Exxon's $8.4B acquisition of 120,000 net acres in the Delaware Basin marks a decisive step in the Permian consolidation endgame. The deal makes Exxon the largest single-operator acreage holder in the basin, with breakeven economics below $40/barrel WTI providing a substantial margin of safety. Analysts expect Chevron and ConocoPhillips to respond with deals of their own.",
     headlines: [
       { title: "ExxonMobil Expands Permian Basin with $8.4B Acquisition", source: "FT", time: "3h ago" },
       { title: "Permian Acreage Prices Hit Record on XOM Deal Premium", source: "Reuters", time: "4h ago" },
       { title: "Chevron, ConocoPhillips Seen as Likely Responsive Acquirers", source: "WSJ", time: "5h ago" },
     ],
-    insights: [
-      { ticker: "XOM", company: "Exxon Mobil", sector: "Energy", currentTP: 125, suggestedTP: 138, priceAction: "raise", lastPrice: 114, thesisAlignment: "confirms", thesisSummary: "Permian consolidation and FCF growth", rationale: "Accretive acquisition at sub-$40 breakeven validates our Permian consolidation thesis. Record acreage pricing confirms scarcity value. Raise TP to reflect added production capacity and improved cost curve positioning.", confidence: 86 },
-      { ticker: "CVX", company: "Chevron Corp.", sector: "Energy", currentTP: 180, suggestedTP: 188, priceAction: "raise", lastPrice: 168, thesisAlignment: "confirms", thesisSummary: "Permian acreage value re-rating", rationale: "XOM deal reprices Permian acreage higher, which directly benefits CVX's existing Delaware Basin position. Multiple sources confirm CVX is evaluating responsive M&A. Modest TP increase on comp-based re-rating.", confidence: 72 },
-    ],
-    nextSteps: ["see-past-analysis", "review-model"],
+    insights: [],
+    nextStep: "approve",
   },
   {
     id: "6",
@@ -246,17 +206,83 @@ const themeClusters: ThemeCluster[] = [
     category: "Geopolitical",
     themeAlignment: "challenges",
     summary:
-      "Beijing's $150B stimulus package for domestic semiconductor manufacturing and AI development represents a significant escalation in China's push for tech self-sufficiency. The package targets mature node chips (28nm and above) where Chinese foundries are rapidly closing the gap, and includes new provisions restricting foreign cloud providers from serving Chinese government agencies. US chipmakers face dual headwinds: increased competition in mature nodes and potential loss of Asia-Pacific cloud revenue. The timing -- alongside NVIDIA's strong earnings -- creates a mixed signal for AI chip names with significant China exposure.",
+      "Beijing's $150B stimulus package for domestic semiconductor manufacturing and AI development represents a significant escalation in China's push for tech self-sufficiency. US chipmakers face dual headwinds: increased competition in mature nodes and potential loss of Asia-Pacific cloud revenue. The timing -- alongside NVIDIA's strong earnings -- creates a mixed signal for AI chip names with significant China exposure.",
     headlines: [
       { title: "China Announces $150B Stimulus Package Targeting Tech Sector", source: "Nikkei Asia", time: "6h ago" },
       { title: "Beijing Restricts Foreign Cloud Providers from Government Use", source: "Reuters", time: "5h ago" },
       { title: "Chinese Foundries Close Gap in 28nm Chip Production Yields", source: "Bloomberg", time: "6h ago" },
     ],
     insights: [
-      { ticker: "NVDA", company: "NVIDIA Corp.", sector: "Technology", currentTP: 1025, suggestedTP: null, priceAction: "maintain", lastPrice: 878, thesisAlignment: "challenges", thesisSummary: "Uncontested AI chip leadership", rationale: "China stimulus accelerates domestic chip alternatives, adding long-term competitive risk. Three separate policy actions signal a coordinated effort. No TP change yet given strong near-term demand, but flagging as a risk to monitor closely.", confidence: 55 },
-      { ticker: "AAPL", company: "Apple Inc.", sector: "Technology", currentTP: 260, suggestedTP: 250, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "Greater China revenue stability", rationale: "Cloud restrictions and tech nationalism add pressure to AAPL's 18% China revenue exposure. Three policy vectors -- subsidies, cloud restrictions, foundry buildout -- all point the same direction. Lower TP modestly to reflect incremental geopolitical risk premium.", confidence: 65 },
+      { ticker: "NVDA", company: "NVIDIA Corp.", sector: "Technology", currentTP: 1025, suggestedTP: 980, priceAction: "lower", lastPrice: 878, thesisAlignment: "challenges", thesisSummary: "Uncontested AI chip leadership", rationale: "China stimulus accelerates domestic chip alternatives, adding long-term competitive risk. Three separate policy actions signal a coordinated effort. Lower TP to reflect incremental geopolitical risk premium." },
+      { ticker: "AAPL", company: "Apple Inc.", sector: "Technology", currentTP: 260, suggestedTP: 250, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "Greater China revenue stability", rationale: "Cloud restrictions and tech nationalism add pressure to AAPL's 18% China revenue exposure. Three policy vectors -- subsidies, cloud restrictions, foundry buildout -- all point the same direction." },
     ],
-    nextSteps: ["ask-jess", "review-model", "see-past-analysis"],
+    nextStep: "ask-analyst",
+  },
+  {
+    id: "7",
+    theme: "European Defense Spending Surge Creates Industrial Opportunity",
+    category: "Defense / Industrials",
+    themeAlignment: "confirms",
+    summary:
+      "The EU's proposed $150B joint defense fund, combined with Germany's constitutional amendment to exempt defense spending from the debt brake, marks a generational shift in European security posture. Defense budgets across NATO-Europe are converging toward 3% of GDP, up from the 2% target that many members were already struggling to meet. US defense contractors with European operations stand to benefit from procurement acceleration.",
+    headlines: [
+      { title: "EU Proposes $150B Joint Defense Fund Amid Security Concerns", source: "FT", time: "1h ago" },
+      { title: "Germany Lifts Debt Brake for Defense Spending", source: "Reuters", time: "2h ago" },
+      { title: "NATO-Europe Defense Budgets Converging Toward 3% of GDP", source: "Bloomberg", time: "3h ago" },
+    ],
+    insights: [],
+    nextStep: "approve",
+  },
+  {
+    id: "8",
+    theme: "Consumer Credit Delinquencies Signal Macro Deterioration",
+    category: "Consumer / Credit",
+    themeAlignment: "challenges",
+    summary:
+      "Auto loan delinquencies hit a 14-year high at 3.2%, while credit card charge-offs at major issuers rose for the sixth consecutive quarter. Excess savings buffers from the pandemic are now fully depleted for the bottom 60% of households. The consumer credit deterioration creates headwinds for discretionary spending and bank credit loss provisioning.",
+    headlines: [
+      { title: "Auto Loan Delinquencies Hit 14-Year High at 3.2%", source: "Bloomberg", time: "2h ago" },
+      { title: "Credit Card Charge-Offs Rise for Sixth Consecutive Quarter", source: "WSJ", time: "4h ago" },
+      { title: "Pandemic Excess Savings Fully Depleted for Bottom 60%", source: "Axios", time: "3h ago" },
+      { title: "Discover Financial Raises Loss Reserve Guidance by $400M", source: "CNBC", time: "5h ago" },
+    ],
+    insights: [
+      { ticker: "JPM", company: "JPMorgan Chase", sector: "Financials", currentTP: 220, suggestedTP: 210, priceAction: "lower", lastPrice: 228, thesisAlignment: "challenges", thesisSummary: "Consumer banking resilience", rationale: "Rising delinquencies across auto and card portfolios will require higher provisioning. JPM's consumer banking segment faces margin compression from credit losses. Incrementally negative on top of the rate path headwind." },
+    ],
+    nextStep: "reject",
+  },
+  {
+    id: "9",
+    theme: "Cloud Repatriation Trend Accelerates Among Enterprise Buyers",
+    category: "Enterprise Tech",
+    themeAlignment: "challenges",
+    summary:
+      "Gartner's latest CIO survey reveals 38% of large enterprises are actively repatriating workloads from public cloud, up from 22% a year ago. Cost optimization remains the primary driver, with enterprises reporting 30-40% savings on stable workloads moved to owned infrastructure. The trend challenges the secular growth narrative for hyperscalers and benefits on-premise infrastructure vendors.",
+    headlines: [
+      { title: "38% of Enterprises Now Repatriating Cloud Workloads: Gartner", source: "Semafor", time: "1h ago" },
+      { title: "Cloud Cost Optimization Driving On-Prem Infrastructure Revival", source: "The Information", time: "3h ago" },
+      { title: "Dell, HPE See Surge in Enterprise Server Orders", source: "Barron's", time: "4h ago" },
+    ],
+    insights: [
+      { ticker: "MSFT", company: "Microsoft Corp.", sector: "Technology", currentTP: 480, suggestedTP: 460, priceAction: "lower", lastPrice: 462, thesisAlignment: "challenges", thesisSummary: "Azure as primary AI monetization vehicle", rationale: "Cloud repatriation at scale adds headwind to Azure growth already constrained by capacity. Enterprise shift to on-prem for stable workloads reduces Azure's addressable market for non-AI compute. Incrementally challenging." },
+      { ticker: "GOOGL", company: "Alphabet Inc.", sector: "Technology", currentTP: 210, suggestedTP: 200, priceAction: "lower", lastPrice: 182, thesisAlignment: "challenges", thesisSummary: "GCP share gains vs. Azure", rationale: "Repatriation trend affects all hyperscalers. GCP's smaller base makes it relatively more exposed to enterprise cost optimization decisions. The share-gain thesis is partially offset." },
+    ],
+    nextStep: "ask-analyst",
+  },
+  {
+    id: "10",
+    theme: "Japan Corporate Governance Reforms Drive Record Shareholder Returns",
+    category: "Global Macro",
+    themeAlignment: "confirms",
+    summary:
+      "Tokyo Stock Exchange's intensified pressure on sub-1x price-to-book companies is yielding results: aggregate buyback announcements by Japanese companies hit a record $90B annualized in Q1 2026. Cross-shareholding unwinding accelerated, with the largest 100 companies reducing strategic holdings by 15% year-over-year. The governance shift reinforces the structural bull case for Japanese equities.",
+    headlines: [
+      { title: "Japanese Corporate Buybacks Hit Record $90B Annualized Pace", source: "Nikkei Asia", time: "5h ago" },
+      { title: "TSE Steps Up Pressure on Sub-1x Book Value Companies", source: "FT", time: "6h ago" },
+      { title: "Cross-Shareholding Unwinding Accelerates Among Top 100 Firms", source: "Bloomberg", time: "4h ago" },
+    ],
+    insights: [],
+    nextStep: "approve",
   },
 ]
 
@@ -306,7 +332,82 @@ function QuotableWrapper({
   )
 }
 
-function InsightRow({ insight, focusFilter = "none", onQuote }: { insight: StockInsight; focusFilter?: FocusFilter; onQuote?: (text: string) => void }) {
+/** Next step action button for TP & Thesis Review header */
+function NextStepButton({ step }: { step: NextStepType }) {
+  if (step === "approve") {
+    return (
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-positive/15 text-positive transition-colors hover:bg-positive/25"
+              aria-label="Approve — in line with thesis"
+            >
+              <Check className="h-4 w-4" strokeWidth={3} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+            <p className="text-xs">Approve — In line with thesis</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
+  if (step === "reject") {
+    return (
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-negative/15 text-negative transition-colors hover:bg-negative/25"
+              aria-label="Reject — against thesis"
+            >
+              <X className="h-4 w-4" strokeWidth={3} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+            <p className="text-xs">Reject — Against thesis</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
+  // ask-analyst
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="relative inline-flex h-7 items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 pl-1 pr-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+            aria-label="Ask Jess to analyze"
+          >
+            <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
+              <Image
+                src="/images/analyst-jess.jpg"
+                alt="Jess"
+                width={20}
+                height={20}
+                className="h-full w-full object-cover"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-sm bg-[#4A154B]">
+                <MessageSquare className="h-1.5 w-1.5 text-white" />
+              </span>
+            </span>
+            <span>Ask Jess</span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+          <p className="text-xs">Ask Jess to analyze this theme</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
+function InsightRow({ insight, onQuote }: { insight: StockInsight; onQuote?: (text: string) => void }) {
   const priceConfig = PRICE_ACTION_CONFIG[insight.priceAction]
   const excelPath = getExcelPath(insight.ticker, insight.sector)
   const tpChange = insight.suggestedTP ? insight.suggestedTP - insight.currentTP : 0
@@ -315,26 +416,16 @@ function InsightRow({ insight, focusFilter = "none", onQuote }: { insight: Stock
     ? ((insight.suggestedTP - insight.lastPrice) / insight.lastPrice * 100)
     : ((insight.currentTP - insight.lastPrice) / insight.lastPrice * 100)
 
-  const isActive = focusFilter === "none" || insightMatchesFocusWithWeight(insight, focusFilter)
-  const isFocusMode = focusFilter !== "none"
-
   const quotableText = `${insight.ticker} (${insight.company}): TP $${insight.currentTP}${insight.suggestedTP ? ` -> $${insight.suggestedTP}` : ''}, Last $${insight.lastPrice}. Thesis: ${insight.thesisSummary}. ${insight.rationale}`
 
   return (
     <QuotableWrapper quotableText={quotableText} onQuote={onQuote}>
-      <div
-        className={cn(
-          "py-3 first:pt-1.5 last:pb-1.5 rounded-md transition-all duration-300",
-          isFocusMode && isActive && "relative ring-1 ring-foreground/10 bg-gradient-to-r from-foreground/[0.03] to-transparent my-1 px-3 -mx-1",
-          isFocusMode && !isActive && "opacity-25 saturate-0",
-        )}
-      >
+      <div className="py-3 first:pt-1.5 last:pb-1.5 rounded-md transition-all duration-300">
         {/* Top: Ticker, price action badge */}
         <div className="flex items-center gap-2 mb-1.5">
           <span className="font-mono text-xs font-semibold text-foreground">{insight.ticker}</span>
           <span className="text-[11px] text-muted-foreground/70">{insight.company}</span>
           <div className="ml-auto flex items-center gap-1.5">
-            {/* Price action badge */}
             <span
               className={cn(
                 "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
@@ -386,30 +477,56 @@ function InsightRow({ insight, focusFilter = "none", onQuote }: { insight: Stock
               <span className="text-muted-foreground/60">{" -- "}</span>
               <span>{insight.rationale}</span>
             </p>
-            {/* Action buttons below thesis */}
-            <div className="mt-1.5 flex items-center gap-1.5">
-              <a
-                href={excelPath}
-                className="inline-flex items-center gap-1 rounded-md border border-[#21a366]/30 bg-[#21a366]/10 px-2 py-0.5 text-[10px] font-medium text-[#21a366] transition-colors hover:bg-[#21a366]/20 hover:border-[#21a366]/50"
-                aria-label={`Open ${insight.ticker} position model spreadsheet`}
-              >
-                <FileSpreadsheet className="h-3 w-3" />
-                See Model
-              </a>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 rounded-md border border-[#D24726]/30 bg-[#D24726]/10 px-2 py-0.5 text-[10px] font-medium text-[#D24726] transition-colors hover:bg-[#D24726]/20 hover:border-[#D24726]/50"
-              >
-                <Presentation className="h-3 w-3" />
-                See Deck
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <LayoutDashboard className="h-3 w-3" />
-                Open Workspace
-              </button>
+            {/* Action icons below thesis */}
+            <div className="mt-1.5 flex items-center gap-1">
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <a
+                      href={excelPath}
+                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-[#21a366]/30 bg-[#21a366]/10 text-[#21a366] transition-colors hover:bg-[#21a366]/20 hover:border-[#21a366]/50"
+                      aria-label={`Open ${insight.ticker} model`}
+                    >
+                      <FileSpreadsheet className="h-3 w-3" />
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                    <p className="text-xs">See Model</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-[#D24726]/30 bg-[#D24726]/10 text-[#D24726] transition-colors hover:bg-[#D24726]/20 hover:border-[#D24726]/50"
+                      aria-label="See deck"
+                    >
+                      <Presentation className="h-3 w-3" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                    <p className="text-xs">See Deck</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-border bg-secondary text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      aria-label="Open workspace"
+                    >
+                      <LayoutDashboard className="h-3 w-3" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border">
+                    <p className="text-xs">Open Workspace</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         </div>
@@ -430,12 +547,19 @@ function ThemeCard({ cluster, onQuote }: { cluster: ThemeCluster; onQuote?: (tex
   const uniqueSources = [...new Set(cluster.headlines.map((h) => h.source))]
   const sourceCount = uniqueSources.length
   const themeAlignConfig = THEME_ALIGNMENT_CONFIG[cluster.themeAlignment]
+  const isAgainstThesis = cluster.themeAlignment === "challenges"
+  const hasInsights = cluster.insights.length > 0
 
   const headlinesQuotable = cluster.headlines.map((h) => `- ${h.title} (${h.source}, ${h.time})`).join("\n")
   const themeQuotable = `Theme: ${cluster.theme}\nCategory: ${cluster.category}\n\n${cluster.summary}`
 
   return (
-    <article className="group border-b border-border px-6 py-5 transition-colors hover:bg-card/60">
+    <article
+      className={cn(
+        "group border-b border-border px-6 py-5 transition-colors hover:bg-card/60",
+        isAgainstThesis && "relative border-l-2 border-l-negative/40 bg-gradient-to-r from-negative/[0.03] via-transparent to-transparent",
+      )}
+    >
       {/* Theme header */}
       <QuotableWrapper quotableText={`${cluster.theme}: ${cluster.summary}`} onQuote={onQuote} className="mb-2">
         <div className="flex items-center gap-2.5 pr-6">
@@ -455,11 +579,6 @@ function ThemeCard({ cluster, onQuote }: { cluster: ThemeCluster; onQuote?: (tex
             <Clock className="h-3 w-3" />
             {cluster.headlines[0].time}
           </span>
-          <div className="flex items-center gap-1">
-            {uniqueSources.map((source) => (
-              <SourceBadge key={source} source={source} />
-            ))}
-          </div>
           <span className="text-[10px] text-muted-foreground/60">
             {sourceCount} source{sourceCount !== 1 ? "s" : ""}
           </span>
@@ -497,48 +616,41 @@ function ThemeCard({ cluster, onQuote }: { cluster: ThemeCluster; onQuote?: (tex
       </QuotableWrapper>
 
       {/* Theme synthesis */}
-      <QuotableWrapper quotableText={themeQuotable} onQuote={onQuote} className="mb-4">
+      <QuotableWrapper quotableText={themeQuotable} onQuote={onQuote} className={cn(hasInsights ? "mb-4" : "")}>
         <p className="text-[13px] leading-relaxed text-muted-foreground pr-6">
           {cluster.summary}
         </p>
       </QuotableWrapper>
 
-      {/* Stock Insights */}
-      <div className="rounded-lg border border-border bg-secondary/40 px-4 py-2">
-        <div className="mb-1 flex items-center gap-3 border-b border-border/60 pb-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Target Price & Thesis Review
-          </span>
-          <span className="text-[10px] text-muted-foreground/50">
-            {cluster.insights.length} position{cluster.insights.length !== 1 ? "s" : ""} affected
-          </span>
-          {/* Next steps */}
-          <div className="ml-auto flex items-center gap-1.5">
-            {cluster.nextSteps.map((step) => {
-              const config = NEXT_STEP_CONFIG[step]
-              return (
-                <button
-                  key={step}
-                  type="button"
-                  className={cn(
-                    "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors",
-                    step === "ask-jess"
-                      ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
-                      : "border border-border bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground",
-                  )}
-                >
-                  {config.shortLabel}
-                </button>
-              )
-            })}
+      {/* Stock Insights — only rendered for against-thesis themes */}
+      {hasInsights && (
+        <div
+          className={cn(
+            "rounded-lg border px-4 py-2",
+            isAgainstThesis
+              ? "border-negative/20 bg-negative/[0.02]"
+              : "border-border bg-secondary/40",
+          )}
+        >
+          <div className="mb-1 flex items-center gap-3 border-b border-border/60 pb-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Target Price & Thesis Review
+            </span>
+            <span className="text-[10px] text-muted-foreground/50">
+              {cluster.insights.length} position{cluster.insights.length !== 1 ? "s" : ""} affected
+            </span>
+            {/* Next step action */}
+            <div className="ml-auto">
+              <NextStepButton step={cluster.nextStep} />
+            </div>
+          </div>
+          <div className="divide-y divide-border/40">
+            {cluster.insights.map((insight) => (
+              <InsightRow key={insight.ticker} insight={insight} onQuote={onQuote} />
+            ))}
           </div>
         </div>
-        <div className="divide-y divide-border/40">
-          {cluster.insights.map((insight) => (
-            <InsightRow key={insight.ticker} insight={insight} onQuote={onQuote} />
-          ))}
-        </div>
-      </div>
+      )}
     </article>
   )
 }
