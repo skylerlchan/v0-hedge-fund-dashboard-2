@@ -3,7 +3,6 @@
 import {
   Newspaper,
   StickyNote,
-  FolderOpen,
   Layers,
   MousePointerClick,
 } from "lucide-react"

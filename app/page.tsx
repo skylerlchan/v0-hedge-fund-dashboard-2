@@ -99,9 +99,9 @@ function PageContent() {
             </>
           )}
 
-          {/* Center Panel - News Feed */}
+          {/* Center Panel - Workspace */}
           <ResizablePanel defaultSize={rightCollapsed && leftCollapsed ? 100 : leftCollapsed ? 72 : rightCollapsed ? 82 : 54} minSize={30}>
-            <MorningBrief onQuoteToChat={handleQuoteToChat} />
+            <WorkspacePanel />
           </ResizablePanel>
 
           {/* Right Panel - AI Chat */}
