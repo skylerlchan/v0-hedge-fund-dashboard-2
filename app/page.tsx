@@ -8,14 +8,27 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable"
 import { FileSidebar } from "@/components/file-sidebar"
-import { MorningBrief } from "@/components/research/morning-brief"
+import { WorkspaceProvider, useWorkspace } from "@/components/workspace/workspace-context"
+import { WorkspacePanel } from "@/components/workspace/workspace-panel"
 import { AIChatPanel } from "@/components/ai-chat-panel"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function Page() {
+  return (
+    <WorkspaceProvider>
+      <PageContent />
+    </WorkspaceProvider>
+  )
+}
+
+function PageContent() {
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
   const [quotedText, setQuotedText] = useState<string | undefined>(undefined)
+  const { openFile, tabs, activeTabId } = useWorkspace()
+
+  const activeTab = tabs.find((t) => t.id === activeTabId)
+  const activeFileName = activeTab?.name ?? null
 
   const handleQuoteToChat = (text: string) => {
     setQuotedText(text)
@@ -60,6 +73,8 @@ export default function Page() {
           <FileSidebar
             isCollapsed={true}
             onToggle={() => setLeftCollapsed(false)}
+            onFileOpen={openFile}
+            activeFile={activeFileName}
           />
         ) : null}
 
@@ -76,6 +91,8 @@ export default function Page() {
                 <FileSidebar
                   isCollapsed={false}
                   onToggle={() => setLeftCollapsed(true)}
+                  onFileOpen={openFile}
+                  activeFile={activeFileName}
                 />
               </ResizablePanel>
               <ResizableHandle className="w-px bg-border hover:bg-muted-foreground/20 transition-colors" />
