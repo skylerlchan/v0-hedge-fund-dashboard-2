@@ -198,23 +198,36 @@ const FOLDER_ICON_MAP: Record<string, React.ReactNode> = {
 function TreeItem({
   node,
   depth = 0,
+  onFileOpen,
+  activeFile,
 }: {
   node: TreeNode
   depth?: number
+  onFileOpen?: (name: string) => void
+  activeFile?: string | null
 }) {
   const [isOpen, setIsOpen] = useState(depth === 0)
   const hasChildren = node.children && node.children.length > 0
+  const isActive = !hasChildren && activeFile === node.name
 
   return (
     <div>
       <button
         type="button"
-        onClick={() => hasChildren && setIsOpen(!isOpen)}
+        onClick={() => {
+          if (hasChildren) {
+            setIsOpen(!isOpen)
+          } else if (onFileOpen) {
+            onFileOpen(node.name)
+          }
+        }}
         className={cn(
           "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors",
           "hover:bg-accent hover:text-accent-foreground",
           hasChildren ? "text-foreground" : "text-muted-foreground",
           depth === 0 && "font-medium",
+          isActive && "bg-accent text-foreground",
+          !hasChildren && "cursor-pointer",
         )}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
       >
@@ -243,7 +256,7 @@ function TreeItem({
       {hasChildren && isOpen && (
         <div>
           {node.children!.map((child) => (
-            <TreeItem key={child.name} node={child} depth={depth + 1} />
+            <TreeItem key={child.name} node={child} depth={depth + 1} onFileOpen={onFileOpen} activeFile={activeFile} />
           ))}
         </div>
       )}
@@ -255,9 +268,11 @@ function TreeItem({
 function GridFolderCard({
   node,
   onOpen,
+  onFileOpen,
 }: {
   node: TreeNode
   onOpen: (node: TreeNode) => void
+  onFileOpen?: (name: string) => void
 }) {
   const hasChildren = node.children && node.children.length > 0
   const childCount = node.children?.length ?? 0
@@ -266,7 +281,13 @@ function GridFolderCard({
   return (
     <button
       type="button"
-      onClick={() => hasChildren ? onOpen(node) : undefined}
+      onClick={() => {
+        if (hasChildren) {
+          onOpen(node)
+        } else if (onFileOpen) {
+          onFileOpen(node.name)
+        }
+      }}
       className={cn(
         "flex flex-col items-center gap-2 rounded-lg border border-border p-3 transition-colors",
         "hover:bg-accent hover:border-muted-foreground/30",
@@ -302,7 +323,7 @@ function GridFolderCard({
 }
 
 /* ── Grid View: Full Component ── */
-function GridView({ tree }: { tree: TreeNode[] }) {
+function GridView({ tree, onFileOpen }: { tree: TreeNode[]; onFileOpen?: (name: string) => void }) {
   const [path, setPath] = useState<TreeNode[]>([])
 
   const currentItems = path.length === 0
@@ -356,7 +377,7 @@ function GridView({ tree }: { tree: TreeNode[] }) {
       <ScrollArea className="flex-1">
         <div className="grid grid-cols-3 gap-2 p-3">
           {currentItems.map((node) => (
-            <GridFolderCard key={node.name} node={node} onOpen={handleOpen} />
+            <GridFolderCard key={node.name} node={node} onOpen={handleOpen} onFileOpen={onFileOpen} />
           ))}
         </div>
       </ScrollArea>
@@ -368,9 +389,13 @@ function GridView({ tree }: { tree: TreeNode[] }) {
 export function FileSidebar({
   isCollapsed,
   onToggle,
+  onFileOpen,
+  activeFile,
 }: {
   isCollapsed: boolean
   onToggle: () => void
+  onFileOpen?: (name: string) => void
+  activeFile?: string | null
 }) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
   const [sortMode, setSortMode] = useState<SortMode>("alpha")
@@ -546,12 +571,12 @@ export function FileSidebar({
           <ScrollArea className="flex-1">
             <div className="p-1">
               {sortedTree.map((node) => (
-                <TreeItem key={node.name} node={node} depth={0} />
+                <TreeItem key={node.name} node={node} depth={0} onFileOpen={onFileOpen} activeFile={activeFile} />
               ))}
             </div>
           </ScrollArea>
         ) : (
-          <GridView tree={sortedTree} />
+          <GridView tree={sortedTree} onFileOpen={onFileOpen} />
         )}
 
         {/* Upload button */}
