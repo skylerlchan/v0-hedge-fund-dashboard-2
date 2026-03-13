@@ -282,23 +282,6 @@ export function PortfolioHub({
 
   return (
     <div className="flex h-full w-full flex-col border-r border-border bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-3 py-2">
-        <div className="flex items-center gap-2">
-          <Bot className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            AI Assistant
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          aria-label="Collapse panel"
-        >
-          <PanelLeftClose className="h-3.5 w-3.5" />
-        </button>
-      </div>
 
       {/* Hero: Start Chat Button */}
       <div className="p-3 border-b border-border">
@@ -319,27 +302,6 @@ export function PortfolioHub({
 
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-4 p-3">
-          {/* Human Input Needed - Most Prominent */}
-          {hasAlerts && (
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-red-600">
-                    Needs Your Input
-                  </h3>
-                  <Badge className="h-4 px-1.5 text-[10px] font-medium bg-red-500 text-white">
-                    {alertsNeedingInput.length}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2.5">
-                {alertsNeedingInput.map((alert) => (
-                  <HumanInputCard key={alert.id} alert={alert} />
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Chat History - Flat */}
           <div>
             <h3 className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
