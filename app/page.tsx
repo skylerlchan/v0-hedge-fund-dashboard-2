@@ -7,7 +7,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable"
-import { FileSidebar } from "@/components/file-sidebar"
+import { PortfolioHub } from "@/components/portfolio-hub"
 import { MorningBrief } from "@/components/research/morning-brief"
 import { AIChatPanel } from "@/components/ai-chat-panel"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -51,14 +51,14 @@ export default function Page() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
         {leftCollapsed ? (
-          <FileSidebar
+          <PortfolioHub
             isCollapsed={true}
             onToggle={() => setLeftCollapsed(false)}
           />
         ) : null}
 
         <ResizablePanelGroup direction="horizontal" className="flex-1">
-          {/* Left Panel - File Sidebar */}
+          {/* Left Panel - Portfolio Hub */}
           {!leftCollapsed && (
             <>
               <ResizablePanel
@@ -67,7 +67,7 @@ export default function Page() {
                 maxSize={28}
                 className="min-w-0"
               >
-                <FileSidebar
+                <PortfolioHub
                   isCollapsed={false}
                   onToggle={() => setLeftCollapsed(true)}
                 />
