@@ -487,51 +487,7 @@ function ThemeCard({ cluster }: { cluster: ThemeCluster }) {
 
 export function MorningBrief() {
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-foreground">
-              Morning Brief
-            </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Feb 12, 2026 — Thematic Intelligence Feed
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 rounded-md bg-positive/10 px-2.5 py-1 text-xs font-medium text-positive">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-positive" />
-              Live
-            </span>
-          </div>
-        </div>
-
-        {/* Portfolio Summary Strip */}
-        <div className="mt-3 flex items-center gap-4 rounded-lg bg-secondary px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Portfolio
-            </span>
-            <span className="text-xs text-muted-foreground">|</span>
-          </div>
-          <PortfolioStat label="NAV" value="$2.4B" />
-          <PortfolioStat label="Day P&L" value="+$18.3M" positive />
-          <PortfolioStat label="Gross" value="185%" />
-          <PortfolioStat label="Net" value="62%" />
-          <PortfolioStat label="Beta" value="0.74" />
-          <PortfolioStat label="Sharpe" value="2.31" />
-        </div>
-      </div>
-
-      {/* Theme List */}
-      <ScrollArea className="flex-1">
-        <div>
-          {themeClusters.map((cluster) => (
-            <ThemeCard key={cluster.id} cluster={cluster} />
-          ))}
-        </div>
-      </ScrollArea>
+    <div className="flex h-full w-full items-center justify-center bg-background">
     </div>
   )
 }

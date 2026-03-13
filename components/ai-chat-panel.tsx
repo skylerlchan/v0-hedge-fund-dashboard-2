@@ -157,9 +157,6 @@ export function AIChatPanel({
         >
           <PanelRight className="h-4 w-4" />
         </button>
-        <div className="mt-3 flex flex-col items-center">
-          <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
-        </div>
       </div>
     )
   }
@@ -168,12 +165,9 @@ export function AIChatPanel({
     <div className="flex h-full w-full flex-col border-l border-border bg-background">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            AI Assistant
-          </span>
-        </div>
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Agent
+        </span>
         <button
           type="button"
           onClick={onToggle}
@@ -184,27 +178,26 @@ export function AIChatPanel({
         </button>
       </div>
 
-      {/* Model indicator + Folder context */}
+      {/* Context bar */}
       <div className="flex items-center justify-between border-b border-border px-3 py-1.5 gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-positive" />
           <span className="font-mono text-[10px] text-muted-foreground truncate">
-            claude-4-opus
+            opus-4
           </span>
         </div>
-        {/* Folder context dropdown */}
+        {/* Context dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setFolderDropdownOpen((prev) => !prev)}
-            className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-accent"
+            className="flex items-center gap-1.5 rounded border border-border bg-secondary px-2 py-0.5 text-[10px] font-medium text-foreground transition-colors hover:bg-accent"
           >
-            <FolderOpen className="h-3 w-3 text-muted-foreground" />
             <span className="truncate max-w-[80px]">{activeFolder}</span>
             <ChevronDown className={cn("h-2.5 w-2.5 text-muted-foreground transition-transform", folderDropdownOpen && "rotate-180")} />
           </button>
           {folderDropdownOpen && (
-            <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border border-border bg-popover py-1 shadow-lg">
+            <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded border border-border bg-popover py-0.5 shadow-lg">
               {FOLDER_OPTIONS.map((folder) => (
                 <button
                   key={folder}
@@ -214,13 +207,12 @@ export function AIChatPanel({
                     setFolderDropdownOpen(false)
                   }}
                   className={cn(
-                    "flex w-full items-center gap-2 px-3 py-1.5 text-xs transition-colors hover:bg-accent",
+                    "flex w-full items-center px-2.5 py-1 text-[11px] transition-colors hover:bg-accent",
                     activeFolder === folder
                       ? "text-foreground font-medium"
                       : "text-muted-foreground",
                   )}
                 >
-                  <FolderOpen className="h-3 w-3" />
                   {folder}
                 </button>
               ))}
@@ -231,28 +223,21 @@ export function AIChatPanel({
 
       {/* Messages */}
       <ScrollArea className="flex-1">
-        <div ref={scrollRef} className="flex flex-col gap-1 p-3">
+        <div ref={scrollRef} className="flex flex-col gap-3 p-3">
           {messages.map((msg) => (
-            <div key={msg.id} className="mb-3">
-              <div className="mb-1 flex items-center gap-1.5">
-                {msg.role === "assistant" ? (
-                  <Bot className="h-3 w-3 text-muted-foreground" />
-                ) : (
-                  <User className="h-3 w-3 text-muted-foreground" />
-                )}
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  {msg.role === "assistant" ? "Assistant" : "You"}
-                </span>
-                <span className="text-[10px] text-muted-foreground/60">
-                  {msg.timestamp}
-                </span>
-              </div>
+            <div key={msg.id} className={cn(
+              "flex flex-col gap-1",
+              msg.role === "user" && "items-end"
+            )}>
+              <span className="font-mono text-[9px] text-muted-foreground/35">
+                {msg.timestamp}
+              </span>
               <div
                 className={cn(
-                  "rounded-md px-3 py-2 text-xs leading-relaxed",
+                  "max-w-[85%] rounded border text-[11px] leading-relaxed px-3 py-2",
                   msg.role === "assistant"
-                    ? "bg-secondary text-secondary-foreground"
-                    : "bg-accent text-accent-foreground"
+                    ? "border-border/60 bg-secondary/50 text-foreground"
+                    : "border-blue-500/20 bg-blue-500/10 text-foreground"
                 )}
               >
                 {msg.content.split("\n").map((line, i) => (
@@ -269,29 +254,24 @@ export function AIChatPanel({
 
       {/* Input */}
       <div className="border-t border-border p-3">
-        <div className="flex items-end gap-2 rounded-lg bg-secondary p-2">
+        <div className="flex items-end gap-2 rounded border border-border bg-secondary/30 p-2">
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about positions, risk, or market data..."
-            className="min-h-[36px] max-h-[120px] flex-1 resize-none bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+            placeholder="Query..."
+            className="min-h-[32px] max-h-[120px] flex-1 resize-none bg-transparent text-[11px] text-foreground placeholder:text-muted-foreground focus:outline-none"
             rows={1}
           />
           <button
             type="button"
             onClick={handleSend}
             disabled={!input.trim()}
-            className="flex shrink-0 items-center gap-1 rounded-md bg-foreground px-2.5 py-1.5 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40"
+            className="flex shrink-0 items-center rounded bg-foreground px-2 py-1 text-[11px] font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-30"
           >
-            <CornerDownLeft className="h-3 w-3" />
+            Send
           </button>
-        </div>
-        <div className="mt-1.5 flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground/60">
-            Enter to send, Shift+Enter for new line
-          </span>
         </div>
       </div>
     </div>

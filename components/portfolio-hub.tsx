@@ -287,7 +287,7 @@ export function PortfolioHub({
         <div className="flex items-center gap-2">
           <Bot className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Claude
+            AI Assistant
           </span>
         </div>
         <button
